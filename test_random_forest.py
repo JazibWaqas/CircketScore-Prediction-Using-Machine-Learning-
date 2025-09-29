@@ -14,7 +14,7 @@ def test_random_forest():
     print("="*50)
     
     # Load the ML-ready dataset
-    df = pd.read_csv('ml_ready_cricket_dataset.csv')
+    df = pd.read_csv('ml_ready_fixed_dataset.csv')
     print(f"Dataset loaded: {df.shape}")
     
     # Prepare features and target

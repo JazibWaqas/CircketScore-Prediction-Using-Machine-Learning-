@@ -17,7 +17,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 class CricketScorePredictor:
-    def __init__(self, dataset_path='ml_ready_cricket_dataset.csv'):
+    def __init__(self, dataset_path='ml_ready_fixed_dataset.csv'):
         self.dataset_path = dataset_path
         self.df = None
         self.X_train = None

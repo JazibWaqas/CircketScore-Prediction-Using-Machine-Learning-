@@ -17,7 +17,7 @@ def run_ml_models():
     
     # Load the ML-ready dataset
     print("Loading ML-ready dataset...")
-    df = pd.read_csv('ml_ready_cricket_dataset.csv')
+    df = pd.read_csv('ml_ready_fixed_dataset.csv')
     print(f"Dataset shape: {df.shape}")
     
     # Prepare features and target
