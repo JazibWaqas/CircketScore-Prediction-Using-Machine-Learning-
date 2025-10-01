@@ -36,44 +36,156 @@ System Output: "Pakistan: 165 runs, India: 155 runs"
 3. **Create Frontend** - Interactive team selection and prediction interface
 4. **Deploy System** - Make it accessible to users
 
-## 📁 File Structure - What Each File Is For
+## 📁 Repository Structure - Complete Guide
 
-### **🔧 Core Scripts (What They Do):**
-- **`build_comprehensive_t20_dataset.py`** - Extracts data from 7,223 JSON files and creates comprehensive dataset
-- **`create_validated_dataset.py`** - Cleans data, creates IDs, handles missing values, generates lookup tables
-- **`create_train_test_split.py`** - Splits data by date (2005-2023 train, 2024+ test)
+### **🏗️ Folder Organization:**
+
+```
+CricketScore-Prediction-Using-Machine-Learning/
+├── README.md                                    # This file - Project overview
+├── data/                                        # 🎯 ML-READY DATASETS
+│   ├── train_dataset.csv                       # Training data (9,934 records, 2005-2023)
+│   ├── test_dataset.csv                        # Test data (4,080 records, 2024+)
+│   ├── team_lookup.csv                         # Team ID mapping (172 teams)
+│   ├── venue_lookup.csv                        # Venue ID mapping (503 venues)
+│   ├── player_lookup.csv                       # Player ID mapping (8,468 players)
+│   └── train_test_summary.csv                  # Train/test split statistics
+├── processed_data/                             # 🔄 INTERMEDIATE DATASETS
+│   ├── comprehensive_t20_dataset.csv           # Raw extracted data (14,611 records)
+│   ├── validated_t20_dataset.csv              # Clean dataset with IDs (14,014 records)
+│   └── ml_ready_comprehensive_t20_dataset.csv # ML-ready numerical data
+├── raw_data/                                   # 📊 ORIGINAL DATA SOURCES
+│   ├── t20 matches ball by ball/              # 7,223 T20 match JSON files (2005-2025)
+│   └── PlayerStats/                           # Player statistics (optional enhancement)
+│       ├── all_players.csv                    # Player information (name, country, role)
+│       ├── t20_batting.csv                    # T20 batting statistics
+│       ├── t20_bowling.csv                    # T20 bowling statistics
+│       ├── fielding.csv                       # Fielding statistics
+│       ├── t20_all_round.csv                   # All-rounder statistics
+│       └── country.csv                        # Country information
+├── models/                                     # 🤖 ML MODEL FILES
+│   ├── team_encoder.pkl                       # Team name to ID encoder
+│   ├── venue_encoder.pkl                      # Venue name to ID encoder
+│   └── player_encoder.pkl                     # Player name to ID encoder
+├── scripts/                                   # 📜 DATA PROCESSING SCRIPTS
+│   ├── build_comprehensive_t20_dataset.py    # Extracts data from JSON files
+│   ├── create_validated_dataset.py           # Cleans data, creates IDs
+│   ├── create_train_test_split.py            # Splits data by date
+│   ├── validate_dataset.py                   # Checks data quality
+│   ├── analyze_date_distribution.py          # Analyzes match distribution
+│   ├── analyze_playerstats_integration.py    # Analyzes PlayerStats integration
+│   └── dataset_usage_summary.py              # Summarizes dataset usage
+└── docs/                                      # 📚 DOCUMENTATION
+    └── README.md                              # Detailed technical documentation
+```
+
+### **📂 What Each Folder Contains:**
+
+#### **🎯 `data/` - ML-Ready Datasets (Use These for ML):**
+- **`train_dataset.csv`** - **9,934 records** from 2005-2023 matches
+  - **Purpose:** Train ML models (Linear Regression, Random Forest, XGBoost)
+  - **Features:** 60 features per record
+  - **Target:** `total_runs` (team score)
+- **`test_dataset.csv`** - **4,080 records** from 2024+ matches
+  - **Purpose:** Test model accuracy on unseen data
+  - **Features:** 60 features per record
+  - **Target:** `total_runs` (team score)
+- **`team_lookup.csv`** - **172 teams** with ID mappings
+  - **Purpose:** Frontend team selection dropdown
+  - **Format:** team_id, team_name
+- **`venue_lookup.csv`** - **503 venues** with ID mappings
+  - **Purpose:** Frontend venue selection dropdown
+  - **Format:** venue_id, venue_name
+- **`player_lookup.csv`** - **8,468 players** with ID mappings
+  - **Purpose:** Frontend player selection dropdown
+  - **Format:** player_id, player_name
+- **`train_test_summary.csv`** - Split statistics and validation
+
+#### **🔄 `processed_data/` - Intermediate Datasets (Processing Steps):**
+- **`comprehensive_t20_dataset.csv`** - **14,611 records** raw extracted data
+  - **Purpose:** Initial dataset from JSON files
+  - **Status:** Contains some invalid records
+- **`validated_t20_dataset.csv`** - **14,014 records** clean dataset
+  - **Purpose:** Cleaned data with proper IDs
+  - **Status:** Ready for train/test split
+- **`ml_ready_comprehensive_t20_dataset.csv`** - **14,611 records** numerical data
+  - **Purpose:** ML-ready format with all numerical features
+  - **Status:** Intermediate processing step
+
+#### **📊 `raw_data/` - Original Data Sources (Don't Modify):**
+- **`t20 matches ball by ball/`** - **7,223 JSON files** (2005-2025)
+  - **Purpose:** Original match data source
+  - **Content:** Ball-by-ball data, team lineups, match context
+  - **Size:** 7,223 match files
+- **`PlayerStats/`** - **Player statistics** (optional enhancement)
+  - **Purpose:** Individual player performance data
+  - **Content:** Batting, bowling, fielding statistics
+  - **Status:** Available for future integration
+
+#### **🤖 `models/` - ML Model Files (Generated by Scripts):**
+- **`team_encoder.pkl`** - Converts team names to numerical IDs
+- **`venue_encoder.pkl`** - Converts venue names to numerical IDs
+- **`player_encoder.pkl`** - Converts player names to numerical IDs
+- **Purpose:** Enable ML models to work with categorical data
+
+#### **📜 `scripts/` - Data Processing Scripts (Run These to Recreate Data):**
+- **`build_comprehensive_t20_dataset.py`** - Extracts data from 7,223 JSON files
+- **`create_validated_dataset.py`** - Cleans data, creates IDs, handles missing values
+- **`create_train_test_split.py`** - Splits data by date (2005-2023 vs 2024+)
 - **`validate_dataset.py`** - Checks data quality and identifies issues
 - **`analyze_date_distribution.py`** - Analyzes match distribution by year
-- **`analyze_playerstats_integration.py`** - Analyzes whether to integrate PlayerStats dataset
+- **`analyze_playerstats_integration.py`** - Analyzes whether to integrate PlayerStats
+- **`dataset_usage_summary.py`** - Summarizes how to use each dataset
 
-### **📊 Main Datasets (What to Use):**
-- **`train_dataset.csv`** - **TRAINING DATA** (9,934 records, 2005-2023) - Use this to train ML models
-- **`test_dataset.csv`** - **TESTING DATA** (4,080 records, 2024+) - Use this to test model accuracy
-- **`validated_t20_dataset.csv`** - Clean dataset with IDs (14,014 records) - Source for train/test split
+#### **📚 `docs/` - Documentation:**
+- **`README.md`** - Detailed technical documentation
+  - **Purpose:** Comprehensive project documentation
+  - **Content:** Technical details, usage instructions, file explanations
 
-### **🔗 Lookup Tables (For Frontend):**
-- **`team_lookup.csv`** - Maps team IDs to team names (172 teams) - Use for team selection dropdown
-- **`venue_lookup.csv`** - Maps venue IDs to venue names (503 venues) - Use for venue selection dropdown
-- **`player_lookup.csv`** - Maps player IDs to player names (8,468 players) - Use for player selection dropdown
+### **🎯 How to Use Each Folder:**
 
-### **🤖 Encoders (For ML Models):**
-- **`team_encoder.pkl`** - Converts team names to IDs for ML models
-- **`venue_encoder.pkl`** - Converts venue names to IDs for ML models
-- **`player_encoder.pkl`** - Converts player names to IDs for ML models
+#### **For ML Model Training:**
+```python
+# Use files from data/ folder
+train_df = pd.read_csv('data/train_dataset.csv')
+test_df = pd.read_csv('data/test_dataset.csv')
+```
 
-### **📈 Raw Data Sources:**
-- **`t20 matches ball by ball/`** - 7,223 T20 match JSON files (2005-2025) - Original data source
-- **`PlayerStats/`** - Player statistics (optional for future enhancement)
-  - `all_players.csv` - Player information (name, country, playing role)
-  - `t20_batting.csv` - T20 batting statistics
-  - `t20_bowling.csv` - T20 bowling statistics
-  - `fielding.csv` - Fielding statistics
-  - `country.csv` - Country information
+#### **For Frontend Development:**
+```python
+# Use lookup tables from data/ folder
+team_lookup = pd.read_csv('data/team_lookup.csv')
+venue_lookup = pd.read_csv('data/venue_lookup.csv')
+player_lookup = pd.read_csv('data/player_lookup.csv')
+```
 
-### **📋 Supporting Files:**
-- **`comprehensive_t20_dataset.csv`** - Raw extracted data (14,611 records) - Intermediate file
-- **`ml_ready_comprehensive_t20_dataset.csv`** - ML-ready numerical data - Intermediate file
-- **`train_test_summary.csv`** - Summary of train/test split statistics
+#### **For Data Processing:**
+```bash
+# Run scripts from scripts/ folder
+python scripts/build_comprehensive_t20_dataset.py
+python scripts/create_validated_dataset.py
+python scripts/create_train_test_split.py
+```
+
+#### **For Model Deployment:**
+```python
+# Use encoders from models/ folder
+import pickle
+team_encoder = pickle.load(open('models/team_encoder.pkl', 'rb'))
+venue_encoder = pickle.load(open('models/venue_encoder.pkl', 'rb'))
+player_encoder = pickle.load(open('models/player_encoder.pkl', 'rb'))
+```
+
+### **🔄 Data Flow:**
+```
+raw_data/ → scripts/ → processed_data/ → data/ → models/
+```
+
+1. **Start with:** `raw_data/` (original JSON files)
+2. **Process with:** `scripts/` (data processing scripts)
+3. **Create:** `processed_data/` (intermediate datasets)
+4. **Generate:** `data/` (ML-ready datasets)
+5. **Train:** `models/` (ML model files)
 
 ## 📊 Dataset Statistics
 
@@ -122,7 +234,7 @@ System Output: "Pakistan: 165 runs, India: 155 runs"
 ### **Step 1: Train ML Models**
 ```python
 # Load training data
-train_df = pd.read_csv('train_dataset.csv')
+train_df = pd.read_csv('data/train_dataset.csv')
 
 # Extract features and target
 X = train_df.drop(['total_runs'], axis=1)
@@ -135,7 +247,7 @@ y = train_df['total_runs']
 ### **Step 2: Test Model Accuracy**
 ```python
 # Load test data
-test_df = pd.read_csv('test_dataset.csv')
+test_df = pd.read_csv('data/test_dataset.csv')
 
 # Test model performance
 # ... model testing code ...
@@ -144,9 +256,9 @@ test_df = pd.read_csv('test_dataset.csv')
 ### **Step 3: Create Frontend**
 ```python
 # Use lookup tables for user interface
-team_lookup = pd.read_csv('team_lookup.csv')
-venue_lookup = pd.read_csv('venue_lookup.csv')
-player_lookup = pd.read_csv('player_lookup.csv')
+team_lookup = pd.read_csv('data/team_lookup.csv')
+venue_lookup = pd.read_csv('data/venue_lookup.csv')
+player_lookup = pd.read_csv('data/player_lookup.csv')
 
 # Create team selection interface
 # ... frontend code ...
@@ -162,13 +274,13 @@ player_lookup = pd.read_csv('player_lookup.csv')
 ## 📋 Quick Start Guide
 
 ### **For Data Scientists:**
-1. **Load training data:** `train_dataset.csv` (9,934 records)
+1. **Load training data:** `data/train_dataset.csv` (9,934 records)
 2. **Train models:** Linear Regression, Random Forest, XGBoost
-3. **Test on:** `test_dataset.csv` (4,080 records)
+3. **Test on:** `data/test_dataset.csv` (4,080 records)
 4. **Validate accuracy:** Compare predictions vs actual scores
 
 ### **For Frontend Developers:**
-1. **Use lookup tables:** `team_lookup.csv`, `venue_lookup.csv`, `player_lookup.csv`
+1. **Use lookup tables:** `data/team_lookup.csv`, `data/venue_lookup.csv`, `data/player_lookup.csv`
 2. **Create dropdowns:** Team selection, venue selection, player selection
 3. **Integrate models:** Use trained models for predictions
 4. **Display results:** Show predicted scores for both teams
@@ -195,38 +307,20 @@ player_lookup = pd.read_csv('player_lookup.csv')
 - **Feature engineering** for accurate predictions
 - **Data validation** and quality checks
 
-## 📝 Usage
+## 🎯 Next Steps
 
-### **Building the Dataset**
-```bash
-python build_comprehensive_t20_dataset.py
-python create_validated_dataset.py
-```
+### **Immediate Actions:**
+1. **Train ML Models** - Use `data/train_dataset.csv` to build prediction models
+2. **Test Model Accuracy** - Use `data/test_dataset.csv` to validate performance
+3. **Create Frontend** - Use lookup tables for team/player/venue selection
+4. **Deploy System** - Make it accessible to users
 
-### **Dataset Structure**
-Each row represents one team's performance in one match:
-- **Match info:** ID, date, venue, teams
-- **Team performance:** Runs, boundaries, run rate
-- **Player data:** List of player IDs for the team
-- **Context:** Toss, batting first, match importance
-- **Historical:** Venue stats, head-to-head records, team form
-
-## 🎯 Future Enhancements
-
+### **Future Enhancements:**
 1. **Real-time Predictions** - Live match predictions
 2. **Player Analytics** - Individual player impact analysis
 3. **Venue Analysis** - Detailed venue-specific insights
 4. **Match Simulation** - Full match outcome prediction
 5. **Mobile App** - Mobile-friendly interface
-
-## 📊 Data Quality
-
-- **Comprehensive coverage** - 20+ years of T20 data
-- **Global scope** - International and domestic matches
-- **Rich context** - Venue, opposition, match importance
-- **Player details** - Actual lineups from each match
-- **Clean data** - Validated and error-free
-- **Proper IDs** - Machine learning ready
 
 ## 🏆 Project Value
 
@@ -237,30 +331,20 @@ This system enables:
 - **Researchers** to study cricket performance factors
 - **Fantasy cricket** players to optimize team selection
 
-## 📁 File Structure
+## 📊 Data Quality
 
-```
-CricketScore-Prediction-Using-Machine-Learning/
-├── README.md                                    # This file
-├── build_comprehensive_t20_dataset.py           # Dataset builder
-├── create_validated_dataset.py                  # Data cleaner
-├── validate_dataset.py                          # Data validator
-├── comprehensive_t20_dataset.csv                # Raw dataset
-├── validated_t20_dataset.csv                    # Clean dataset
-├── train_dataset.csv                            # Training data (2005-2023)
-├── test_dataset.csv                             # Test data (2024+)
-├── team_lookup.csv                              # Team ID mapping
-├── venue_lookup.csv                             # Venue ID mapping
-├── player_lookup.csv                            # Player ID mapping
-├── PlayerStats/                                 # Player statistics
-└── t20 matches ball by ball/                   # Raw match data
-```
+- **Comprehensive coverage** - 20+ years of T20 data
+- **Global scope** - International and domestic matches
+- **Rich context** - Venue, opposition, match importance
+- **Player details** - Actual lineups from each match
+- **Clean data** - Validated and error-free
+- **Proper IDs** - Machine learning ready
 
 ## 🎯 Summary - What You Need to Know
 
 ### **✅ READY TO USE:**
-- **`train_dataset.csv`** - 9,934 records (2005-2023) for training ML models
-- **`test_dataset.csv`** - 4,080 records (2024+) for testing model accuracy
+- **`data/train_dataset.csv`** - 9,934 records (2005-2023) for training ML models
+- **`data/test_dataset.csv`** - 4,080 records (2024+) for testing model accuracy
 - **Lookup tables** - For frontend team/player/venue selection
 - **Clean data** - Validated and error-free
 
@@ -272,6 +356,38 @@ CricketScore-Prediction-Using-Machine-Learning/
 
 ### **🎯 GOAL:**
 Build a cricket score prediction system where users can select any two teams, choose venues, and get score predictions for "what if" scenarios.
+
+## 🚀 Quick Reference - What to Use When
+
+### **🎯 For ML Model Training:**
+- **Use:** `data/train_dataset.csv` (9,934 records)
+- **Purpose:** Train Linear Regression, Random Forest, XGBoost
+- **Target:** `total_runs` (team score)
+
+### **🧪 For Model Testing:**
+- **Use:** `data/test_dataset.csv` (4,080 records)
+- **Purpose:** Test model accuracy on 2024+ data
+- **Validation:** Compare predictions vs actual scores
+
+### **🖥️ For Frontend Development:**
+- **Use:** `data/team_lookup.csv`, `data/venue_lookup.csv`, `data/player_lookup.csv`
+- **Purpose:** Create dropdown menus for team/venue/player selection
+- **Format:** ID to name mappings
+
+### **🔧 For Data Processing:**
+- **Use:** `scripts/ folder` (all Python files)
+- **Purpose:** Recreate datasets from raw data
+- **Order:** build → validate → split
+
+### **📊 For Data Analysis:**
+- **Use:** `processed_data/` folder
+- **Purpose:** Explore intermediate datasets
+- **Files:** comprehensive, validated, ml_ready datasets
+
+### **🤖 For Model Deployment:**
+- **Use:** `models/` folder (encoder files)
+- **Purpose:** Convert names to IDs for ML models
+- **Format:** Pickle files (.pkl)
 
 ---
 
