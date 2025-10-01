@@ -1,0 +1,2 @@
+total_records,train_records,test_records,train_matches,test_matches,train_teams,test_teams,train_venues,test_venues,train_date_range,test_date_range,train_avg_runs,test_avg_runs
+14014,9934,4080,4967,2040,147,159,423,208,2005-02-17 00:00:00 to 2023-12-31 00:00:00,2024-01-05 00:00:00 to 2025-09-18 00:00:00,136.18582645460037,129.67696078431374
