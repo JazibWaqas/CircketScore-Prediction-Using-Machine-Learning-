@@ -1,0 +1,2 @@
+r2_score,rmse,mae,accuracy_10_percent,accuracy_15_percent,accuracy_20_percent,accuracy_10_runs,close_accuracy,good_accuracy,reasonable_accuracy
+0.701594138787391,41.44285340122872,35.61955360267058,11.600000000000001,22.8,36.0,12.2,26.6,42.8,59.8
