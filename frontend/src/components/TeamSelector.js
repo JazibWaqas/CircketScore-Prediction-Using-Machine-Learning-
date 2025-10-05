@@ -118,7 +118,7 @@ const TeamSelector = ({
           Select Team
         </label>
         <select
-          value={team.id || ''}
+          value={team.team_id || ''}
           onChange={handleTeamChange}
           className="cricket-select w-full"
         >
@@ -132,13 +132,13 @@ const TeamSelector = ({
       </div>
 
       {/* Team Name Display */}
-      {team.name && (
+      {team.team_name && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-4 p-3 bg-cricket-green/10 border border-cricket-green/30 rounded-lg"
         >
-          <div className="text-cricket-green font-semibold">{team.name}</div>
+          <div className="text-cricket-green font-semibold">{team.team_name}</div>
           <div className="text-sm text-dark-muted">
             {team.players.length}/11 players selected
           </div>
@@ -146,7 +146,7 @@ const TeamSelector = ({
       )}
 
       {/* Player Selection */}
-      {team.name && (
+      {team.team_name && (
         <div className="mb-4">
           <div className="flex items-center justify-between mb-3">
             <label className="text-sm font-medium text-dark-muted">
@@ -302,7 +302,7 @@ const TeamSelector = ({
                       <motion.button
                         key={player.player_id}
                         whileHover={{ backgroundColor: '#00C85120' }}
-                        onClick={() => handlePlayerAdd(player.player_id, player.player_name, player.country, player.player_role)}
+                        onClick={() => onPlayerSelect(teamType, player.player_id, player.player_name, player.country, player.player_role)}
                         className="w-full text-left p-3 hover:bg-cricket-green/10 border-b border-dark-border last:border-b-0 transition-colors"
                       >
                         <div className="font-medium text-dark-text">

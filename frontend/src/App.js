@@ -21,27 +21,37 @@ function App() {
   
   // Team selection state
   const [teamA, setTeamA] = useState({
-    id: null,
-    name: '',
+    team_id: null,
+    team_name: '',
     players: []
   });
   const [teamB, setTeamB] = useState({
-    id: null,
-    name: '',
+    team_id: null,
+    team_name: '',
     players: []
   });
   
-  // Match context state
+  // Match context state - ALL features needed for ML model
   const [matchContext, setMatchContext] = useState({
     venue: null,
     date: new Date(),
     battingFirst: null,
     tossWinner: null,
     tossDecision: null,
+    tournamentType: '',
     isHomeTeam: false,
     isFinal: false,
+    isSemiFinal: false,
+    isPlayoff: false,
+    isT20WorldCup: false,
     isIPL: false,
-    isT20WorldCup: false
+    isBilateral: false,
+    isImportantMatch: false,
+    seasonYear: 2024,
+    seasonMonth: 6,
+    isWinter: false,
+    isSummer: true,
+    isMonsoon: false
   });
 
   useEffect(() => {
@@ -71,9 +81,9 @@ function App() {
 
   const handleTeamSelection = (teamType, teamId, teamName) => {
     if (teamType === 'A') {
-      setTeamA(prev => ({ ...prev, id: teamId, name: teamName }));
+      setTeamA(prev => ({ ...prev, team_id: teamId, team_name: teamName }));
     } else {
-      setTeamB(prev => ({ ...prev, id: teamId, name: teamName }));
+      setTeamB(prev => ({ ...prev, team_id: teamId, team_name: teamName }));
     }
   };
 
@@ -106,7 +116,7 @@ function App() {
   };
 
   const handlePredict = async () => {
-    if (!teamA.id || !teamB.id || !matchContext.venue || !matchContext.venue.venue_id) {
+    if (!teamA.team_id || !teamB.team_id || !matchContext.venue || !matchContext.venue.venue_id) {
       alert('Please select both teams and venue');
       return;
     }
@@ -116,8 +126,8 @@ function App() {
 
     try {
       const response = await axios.post(`${API_BASE_URL}/predict`, {
-        team_a_id: teamA.id,
-        team_b_id: teamB.id,
+        team_a_id: teamA.team_id,
+        team_b_id: teamB.team_id,
         venue_id: matchContext.venue.venue_id,
         team_a_players: teamA.players.map(p => p.id),
         team_b_players: teamB.players.map(p => p.id),
@@ -140,18 +150,28 @@ function App() {
   };
 
   const resetAll = () => {
-    setTeamA({ id: null, name: '', players: [] });
-    setTeamB({ id: null, name: '', players: [] });
+    setTeamA({ team_id: null, team_name: '', players: [] });
+    setTeamB({ team_id: null, team_name: '', players: [] });
     setMatchContext({
       venue: null,
       date: new Date(),
       battingFirst: null,
       tossWinner: null,
       tossDecision: null,
+      tournamentType: '',
       isHomeTeam: false,
       isFinal: false,
+      isSemiFinal: false,
+      isPlayoff: false,
+      isT20WorldCup: false,
       isIPL: false,
-      isT20WorldCup: false
+      isBilateral: false,
+      isImportantMatch: false,
+      seasonYear: 2024,
+      seasonMonth: 6,
+      isWinter: false,
+      isSummer: true,
+      isMonsoon: false
     });
     setPrediction(null);
   };
@@ -214,7 +234,7 @@ function App() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handlePredict}
-              disabled={isPredicting || !teamA.id || !teamB.id || !matchContext.venue}
+              disabled={isPredicting || !teamA.team_id || !teamB.team_id || !matchContext.venue}
               className="cricket-button disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isPredicting ? (
