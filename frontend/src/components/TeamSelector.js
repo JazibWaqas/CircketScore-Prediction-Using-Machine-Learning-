@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Plus, X, Search } from 'lucide-react';
+import { Users, Plus, X, Search, Settings } from 'lucide-react';
 
 const TeamSelector = ({ 
   teamType, 
@@ -13,6 +13,13 @@ const TeamSelector = ({
 }) => {
   const [showPlayerDropdown, setShowPlayerDropdown] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({
+    countries: [],
+    roles: [],
+    battingStyles: [],
+    bowlingStyles: []
+  });
 
   const handleTeamChange = (e) => {
     const teamId = parseInt(e.target.value);
@@ -22,18 +29,74 @@ const TeamSelector = ({
     }
   };
 
-  const handlePlayerAdd = (playerId, playerName) => {
+  const handlePlayerAdd = (playerId, playerName, playerCountry, playerRole) => {
     if (team.players.length < 11) {
-      onPlayerSelect(teamType, playerId, playerName);
+      onPlayerSelect(teamType, playerId, playerName, playerCountry, playerRole);
       setShowPlayerDropdown(false);
       setSearchQuery('');
     }
   };
 
-  const filteredPlayers = players.filter(player =>
-    player.player_name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-    !team.players.some(p => p.id === player.player_id)
-  );
+  const handleFilterChange = (filterType, value) => {
+    setFilters(prev => ({
+      ...prev,
+      [filterType]: prev[filterType].includes(value)
+        ? prev[filterType].filter(item => item !== value)
+        : [...prev[filterType], value]
+    }));
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      countries: [],
+      roles: [],
+      battingStyles: [],
+      bowlingStyles: []
+    });
+  };
+
+  // Get unique values for filter options
+  const uniqueCountries = [...new Set(players.map(p => p.country).filter(Boolean))].sort();
+  const uniqueRoles = [...new Set(players.map(p => p.player_role).filter(Boolean))].sort();
+  const uniqueBattingStyles = [...new Set(players.map(p => p.batting_style).filter(Boolean))].sort();
+  const uniqueBowlingStyles = [...new Set(players.map(p => p.bowling_style).filter(Boolean))].sort();
+
+  const filteredPlayers = players.filter(player => {
+    const query = searchQuery.toLowerCase();
+    const name = player.player_name.toLowerCase();
+    const country = (player.country || '').toLowerCase();
+    const role = (player.player_role || '').toLowerCase();
+    const battingStyle = (player.batting_style || '').toLowerCase();
+    const bowlingStyle = (player.bowling_style || '').toLowerCase();
+    
+    // Text search - matches any part of name, country, or role
+    const matchesText = query === '' || 
+      name.includes(query) || 
+      country.includes(query) || 
+      role.includes(query) ||
+      battingStyle.includes(query) ||
+      bowlingStyle.includes(query);
+    
+    // Filter by countries
+    const matchesCountryFilter = filters.countries.length === 0 || 
+      filters.countries.includes(player.country);
+    
+    // Filter by roles
+    const matchesRoleFilter = filters.roles.length === 0 || 
+      filters.roles.includes(player.player_role);
+    
+    // Filter by batting styles
+    const matchesBattingFilter = filters.battingStyles.length === 0 || 
+      filters.battingStyles.includes(player.batting_style);
+    
+    // Filter by bowling styles
+    const matchesBowlingFilter = filters.bowlingStyles.length === 0 || 
+      filters.bowlingStyles.includes(player.bowling_style);
+    
+    return matchesText && matchesCountryFilter && matchesRoleFilter && 
+           matchesBattingFilter && matchesBowlingFilter &&
+           !team.players.some(p => p.id === player.player_id);
+  });
 
   return (
     <motion.div
@@ -116,19 +179,130 @@ const TeamSelector = ({
                     <Search className="h-4 w-4 text-dark-muted" />
                     <input
                       type="text"
-                      placeholder="Search players..."
+                      placeholder="Search by name, country, or role (e.g., 'Wasim', 'Pakistan', 'Bowler')..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="cricket-input flex-1 text-sm"
                     />
                   </div>
                   
+                  {/* Filter Toggle Button */}
+                  <div className="flex items-center justify-between mb-2">
+                    <button
+                      onClick={() => setShowFilters(!showFilters)}
+                      className="flex items-center gap-2 text-sm text-cricket-green hover:text-green-400 transition-colors"
+                    >
+                      <Settings className="h-4 w-4" />
+                      Filters {showFilters ? '▼' : '▶'}
+                    </button>
+                    {(filters.countries.length > 0 || filters.roles.length > 0 || filters.battingStyles.length > 0 || filters.bowlingStyles.length > 0) && (
+                      <button
+                        onClick={clearFilters}
+                        className="text-xs text-cricket-red hover:text-red-400 transition-colors"
+                      >
+                        Clear Filters
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Filter Options */}
+                  {showFilters && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="mb-4 p-3 bg-dark-card border border-dark-border rounded-lg"
+                    >
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Country Filter */}
+                        <div>
+                          <label className="block text-xs font-medium text-dark-muted mb-2">Country</label>
+                          <div className="max-h-24 overflow-y-auto space-y-1">
+                            {uniqueCountries.slice(0, 10).map(country => (
+                              <label key={country} className="flex items-center gap-2 text-xs">
+                                <input
+                                  type="checkbox"
+                                  checked={filters.countries.includes(country)}
+                                  onChange={() => handleFilterChange('countries', country)}
+                                  className="rounded border-dark-border"
+                                />
+                                <span className="text-dark-text">{country}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Role Filter */}
+                        <div>
+                          <label className="block text-xs font-medium text-dark-muted mb-2">Role</label>
+                          <div className="space-y-1">
+                            {uniqueRoles.map(role => (
+                              <label key={role} className="flex items-center gap-2 text-xs">
+                                <input
+                                  type="checkbox"
+                                  checked={filters.roles.includes(role)}
+                                  onChange={() => handleFilterChange('roles', role)}
+                                  className="rounded border-dark-border"
+                                />
+                                <span className="text-dark-text">{role}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Batting Style Filter */}
+                        <div>
+                          <label className="block text-xs font-medium text-dark-muted mb-2">Batting Style</label>
+                          <div className="space-y-1">
+                            {uniqueBattingStyles.slice(0, 5).map(style => (
+                              <label key={style} className="flex items-center gap-2 text-xs">
+                                <input
+                                  type="checkbox"
+                                  checked={filters.battingStyles.includes(style)}
+                                  onChange={() => handleFilterChange('battingStyles', style)}
+                                  className="rounded border-dark-border"
+                                />
+                                <span className="text-dark-text">{style}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Bowling Style Filter */}
+                        <div>
+                          <label className="block text-xs font-medium text-dark-muted mb-2">Bowling Style</label>
+                          <div className="space-y-1">
+                            {uniqueBowlingStyles.slice(0, 5).map(style => (
+                              <label key={style} className="flex items-center gap-2 text-xs">
+                                <input
+                                  type="checkbox"
+                                  checked={filters.bowlingStyles.includes(style)}
+                                  onChange={() => handleFilterChange('bowlingStyles', style)}
+                                  className="rounded border-dark-border"
+                                />
+                                <span className="text-dark-text">{style}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                  
+                  <div className="mb-2 text-sm text-dark-muted">
+                    {filteredPlayers.length} players found
+                    {(filters.countries.length > 0 || filters.roles.length > 0 || filters.battingStyles.length > 0 || filters.bowlingStyles.length > 0) && (
+                      <span className="ml-2 text-cricket-green">
+                        (Filtered)
+                      </span>
+                    )}
+                  </div>
                   <div className="max-h-48 overflow-y-auto border border-dark-border rounded-lg bg-dark-card">
-                    {filteredPlayers.slice(0, 20).map(player => (
+                    {filteredPlayers.slice(0, 100).map(player => (
                       <motion.button
                         key={player.player_id}
                         whileHover={{ backgroundColor: '#00C85120' }}
-                        onClick={() => handlePlayerAdd(player.player_id, player.player_name)}
+                        onClick={() => handlePlayerAdd(player.player_id, player.player_name, player.country, player.player_role)}
                         className="w-full text-left p-3 hover:bg-cricket-green/10 border-b border-dark-border last:border-b-0 transition-colors"
                       >
                         <div className="font-medium text-dark-text">
@@ -139,6 +313,12 @@ const TeamSelector = ({
                         </div>
                       </motion.button>
                     ))}
+                    {filteredPlayers.length > 100 && (
+                      <div className="p-3 text-center text-sm text-dark-muted border-t border-dark-border">
+                        Showing first 100 of {filteredPlayers.length} results. 
+                        <br />Try a more specific search to narrow down results.
+                      </div>
+                    )}
                   </div>
                 </div>
               </motion.div>
@@ -163,6 +343,9 @@ const TeamSelector = ({
                     <div>
                       <div className="font-medium text-dark-text">
                         {player.name}
+                      </div>
+                      <div className="text-sm text-dark-muted">
+                        {player.country} • {player.role}
                       </div>
                     </div>
                   </div>

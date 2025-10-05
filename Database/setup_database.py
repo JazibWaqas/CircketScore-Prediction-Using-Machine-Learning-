@@ -1,46 +1,34 @@
-#!/usr/bin/env python3
-"""
-Cricket Score Prediction - Complete Database Setup
-Creates SQLite database with all tables and populates with data
-"""
-
 import sqlite3
 import pandas as pd
-import pickle
-import os
 import json
-from pathlib import Path
-import numpy as np
-from datetime import datetime
+import ast
 
-def create_database():
-    """Create complete SQLite database with all tables"""
+def create_t20_only_database():
+    """Create database with only T20 players from training dataset"""
+    db_path = "cricket_prediction.db"
     
-    # Create database directory
-    os.makedirs('database', exist_ok=True)
-    db_path = "database/cricket_prediction.db"
+    # Remove old database
+    if os.path.exists(db_path):
+        os.remove(db_path)
+        print("Removed old database")
+
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
-    
-    print("🏏 Setting up Complete Cricket Prediction Database...")
-    
+
+    print("Creating T20-only database...")
+
     # 1. Create teams table
-    print("📊 Creating teams table...")
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS teams (
             team_id INTEGER PRIMARY KEY,
             team_name TEXT NOT NULL,
             country TEXT,
-            team_type TEXT DEFAULT 'International',
-            established_year INTEGER,
-            home_ground_id INTEGER,
-            team_logo_url TEXT,
+            team_type TEXT,
             is_active BOOLEAN DEFAULT 1
         )
     ''')
-    
+
     # 2. Create venues table
-    print("🏟️ Creating venues table...")
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS venues (
             venue_id INTEGER PRIMARY KEY,
@@ -48,172 +36,26 @@ def create_database():
             city TEXT,
             country TEXT,
             capacity INTEGER,
-            venue_type TEXT DEFAULT 'Stadium',
-            pitch_type TEXT DEFAULT 'Balanced',
-            weather_conditions TEXT,
-            established_year INTEGER,
-            coordinates_lat REAL,
-            coordinates_lng REAL,
+            venue_type TEXT,
+            pitch_type TEXT,
             is_active BOOLEAN DEFAULT 1
         )
     ''')
-    
+
     # 3. Create players table
-    print("👥 Creating players table...")
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS players (
             player_id INTEGER PRIMARY KEY,
             player_name TEXT NOT NULL,
             country TEXT,
-            date_of_birth DATE,
             batting_style TEXT,
             bowling_style TEXT,
             player_role TEXT,
-            is_active BOOLEAN DEFAULT 1,
-            career_start_year INTEGER,
-            career_end_year INTEGER,
-            profile_image_url TEXT
+            is_active BOOLEAN DEFAULT 1
         )
     ''')
     
-    # 4. Create matches table
-    print("🏏 Creating matches table...")
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS matches (
-            match_id INTEGER PRIMARY KEY,
-            date DATE NOT NULL,
-            venue_id INTEGER,
-            team_a_id INTEGER,
-            team_b_id INTEGER,
-            toss_winner_id INTEGER,
-            toss_decision TEXT,
-            match_winner_id INTEGER,
-            player_of_match_id INTEGER,
-            season TEXT,
-            event_name TEXT,
-            match_number INTEGER,
-            gender TEXT,
-            is_final BOOLEAN DEFAULT 0,
-            is_semi_final BOOLEAN DEFAULT 0,
-            is_playoff BOOLEAN DEFAULT 0,
-            FOREIGN KEY (venue_id) REFERENCES venues(venue_id),
-            FOREIGN KEY (team_a_id) REFERENCES teams(team_id),
-            FOREIGN KEY (team_b_id) REFERENCES teams(team_id)
-        )
-    ''')
-    
-    # 5. Create team_performances table
-    print("📈 Creating team_performances table...")
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS team_performances (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            match_id INTEGER,
-            team_id INTEGER,
-            opposition_id INTEGER,
-            total_runs INTEGER,
-            batting_first BOOLEAN,
-            team_players TEXT,
-            team_player_ids TEXT,
-            venue_avg_runs REAL,
-            venue_runs_std REAL,
-            venue_matches INTEGER,
-            venue_high_score INTEGER,
-            venue_low_score INTEGER,
-            h2h_matches INTEGER,
-            h2h_avg_runs REAL,
-            h2h_win_rate REAL,
-            team_form_avg_runs REAL,
-            team_form_win_rate REAL,
-            is_home_team BOOLEAN,
-            team_batting_avg REAL,
-            team_batting_std REAL,
-            opposition_bowling_avg REAL,
-            opposition_bowling_std REAL,
-            venue_difficulty REAL,
-            team_form_score REAL,
-            h2h_strength REAL,
-            match_importance REAL,
-            team_balance REAL,
-            pressure_score REAL,
-            team_recent_avg REAL,
-            opposition_recent_avg REAL,
-            is_home_advantage BOOLEAN,
-            is_important_match BOOLEAN,
-            is_t20_world_cup BOOLEAN,
-            is_ipl BOOLEAN,
-            season_year INTEGER,
-            season_month INTEGER,
-            is_winter BOOLEAN,
-            is_summer BOOLEAN,
-            FOREIGN KEY (match_id) REFERENCES matches(match_id),
-            FOREIGN KEY (team_id) REFERENCES teams(team_id),
-            FOREIGN KEY (opposition_id) REFERENCES teams(team_id)
-        )
-    ''')
-    
-    # 6. Create player_stats table
-    print("📊 Creating player_stats table...")
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS player_stats (
-            player_id INTEGER,
-            team_id INTEGER,
-            season TEXT,
-            matches_played INTEGER,
-            runs_scored INTEGER,
-            balls_faced INTEGER,
-            batting_average REAL,
-            strike_rate REAL,
-            wickets_taken INTEGER,
-            balls_bowled INTEGER,
-            bowling_average REAL,
-            economy_rate REAL,
-            catches INTEGER,
-            stumpings INTEGER,
-            FOREIGN KEY (player_id) REFERENCES players(player_id),
-            FOREIGN KEY (team_id) REFERENCES teams(team_id)
-        )
-    ''')
-    
-    # 7. Create venue_stats table
-    print("🏟️ Creating venue_stats table...")
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS venue_stats (
-            venue_id INTEGER,
-            total_matches INTEGER,
-            avg_runs_scored REAL,
-            runs_std_deviation REAL,
-            highest_score INTEGER,
-            lowest_score INTEGER,
-            batting_first_wins INTEGER,
-            fielding_first_wins INTEGER,
-            avg_wickets_fallen REAL,
-            pitch_conditions TEXT,
-            weather_impact REAL,
-            FOREIGN KEY (venue_id) REFERENCES venues(venue_id)
-        )
-    ''')
-    
-    # 8. Create head_to_head table
-    print("⚔️ Creating head_to_head table...")
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS head_to_head (
-            team_a_id INTEGER,
-            team_b_id INTEGER,
-            total_matches INTEGER,
-            team_a_wins INTEGER,
-            team_b_wins INTEGER,
-            ties INTEGER,
-            avg_runs_team_a REAL,
-            avg_runs_team_b REAL,
-            last_meeting_date DATE,
-            last_meeting_winner_id INTEGER,
-            FOREIGN KEY (team_a_id) REFERENCES teams(team_id),
-            FOREIGN KEY (team_b_id) REFERENCES teams(team_id)
-        )
-    ''')
-    
-    # 9. Create user_predictions table
-    print("🔮 Creating user_predictions table...")
+    # 4. Create user_predictions table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS user_predictions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -226,208 +68,171 @@ def create_database():
             predicted_score_b REAL,
             confidence_score REAL,
             model_used TEXT,
-            actual_score_a REAL,
-            actual_score_b REAL,
-            prediction_accuracy REAL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (team_a_id) REFERENCES teams(team_id),
-            FOREIGN KEY (team_b_id) REFERENCES teams(team_id),
-            FOREIGN KEY (venue_id) REFERENCES venues(venue_id)
+            FOREIGN KEY (team_a_id) REFERENCES teams (team_id),
+            FOREIGN KEY (team_b_id) REFERENCES teams (team_id),
+            FOREIGN KEY (venue_id) REFERENCES venues (venue_id)
         )
     ''')
-    
-    # 10. Create model_performance table
-    print("🤖 Creating model_performance table...")
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS model_performance (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            model_name TEXT,
-            test_date DATE,
-            r2_score REAL,
-            rmse REAL,
-            mae REAL,
-            accuracy_10_runs REAL,
-            accuracy_15_runs REAL,
-            accuracy_20_runs REAL,
-            test_records INTEGER,
-            training_time_seconds REAL,
-            cross_validation_r2 REAL
-        )
-    ''')
-    
-    conn.commit()
-    print("✅ Database tables created successfully!")
-    return conn
 
-def load_data(conn):
-    """Load all data from CSV files into database"""
-    
-    print("\n📊 Loading data into database...")
-    
-    # Load teams
-    print("Loading teams...")
-    teams_df = pd.read_csv('../data/team_lookup.csv')
-    teams_df['country'] = teams_df['team_name'].apply(lambda x: x.split()[-1] if ' ' in x else x)
-    teams_df['team_type'] = 'International'
-    teams_df['is_active'] = True
-    teams_df.to_sql('teams', conn, if_exists='append', index=False)
-    print(f"✅ Loaded {len(teams_df)} teams")
-    
-    # Load venues
-    print("Loading venues...")
-    venues_df = pd.read_csv('../data/venue_lookup.csv')
-    venues_df['city'] = venues_df['venue_name'].apply(lambda x: x.split(',')[0] if ',' in x else 'Unknown')
-    venues_df['country'] = venues_df['venue_name'].apply(lambda x: x.split(',')[-1].strip() if ',' in x else 'Unknown')
-    venues_df['capacity'] = 50000  # Default capacity
-    venues_df['venue_type'] = 'Stadium'
-    venues_df['pitch_type'] = 'Balanced'
-    venues_df['is_active'] = True
-    venues_df.to_sql('venues', conn, if_exists='append', index=False)
-    print(f"✅ Loaded {len(venues_df)} venues")
-    
-    # Load players
-    print("Loading players...")
-    players_df = pd.read_csv('../data/player_lookup.csv')
-    players_df['country'] = 'Unknown'
-    players_df['batting_style'] = 'Right-handed'
-    players_df['bowling_style'] = 'Right-arm medium'
-    players_df['player_role'] = 'All-rounder'
-    players_df['is_active'] = True
-    players_df.to_sql('players', conn, if_exists='append', index=False)
-    print(f"✅ Loaded {len(players_df)} players")
-    
-    # Load training data
-    print("Loading training data...")
-    train_df = pd.read_csv('../data/simple_enhanced_train.csv')
-    
-    # Create matches from training data
-    # First, get unique matches to avoid duplicates
-    unique_matches = train_df.groupby('match_id').first().reset_index()
-    
-    matches_data = []
-    for _, row in unique_matches.iterrows():
-        matches_data.append({
-            'match_id': row['match_id'],
-            'date': row['date'],
-            'venue_id': row['venue_id'],
-            'team_a_id': row['team_id'],
-            'team_b_id': row['opposition'],  # This should be the opposition team ID
-            'toss_winner_id': row['toss_winner'],
-            'toss_decision': row['toss_decision'],
-            'match_winner_id': row['match_winner'],
-            'player_of_match_id': row['player_of_match'],
-            'season': row['season'],
-            'event_name': row['event_name'],
-            'match_number': row['match_number'],
-            'gender': row['gender'],
-            'is_final': row['is_final'],
-            'is_semi_final': row['is_semi_final'],
-            'is_playoff': row['is_playoff']
-        })
-    
-    matches_df = pd.DataFrame(matches_data)
-    matches_df.to_sql('matches', conn, if_exists='append', index=False)
-    print(f"✅ Loaded {len(matches_df)} matches")
-    
-    # Load team performances
-    print("Loading team performances...")
-    # Prepare team_performances data with correct column mapping
-    team_perf_data = train_df.copy()
-    team_perf_data = team_perf_data.rename(columns={
-        'opposition': 'opposition_id'
-    })
-    team_perf_data.to_sql('team_performances', conn, if_exists='append', index=False)
-    print(f"✅ Loaded {len(train_df)} team performances")
-    
-    # Load test data
-    print("Loading test data...")
-    test_df = pd.read_csv('../data/simple_enhanced_test.csv')
-    test_df = test_df.rename(columns={
-        'opposition': 'opposition_id'
-    })
-    test_df.to_sql('team_performances', conn, if_exists='append', index=False)
-    print(f"✅ Loaded {len(test_df)} test performances")
-    
-    # Calculate and load venue stats
-    print("Calculating venue statistics...")
-    venue_stats = train_df.groupby('venue_id').agg({
-        'total_runs': ['mean', 'std', 'max', 'min', 'count'],
-        'batting_first': 'sum'
-    }).reset_index()
-    
-    venue_stats.columns = ['venue_id', 'avg_runs_scored', 'runs_std_deviation', 
-                          'highest_score', 'lowest_score', 'total_matches', 'batting_first_wins']
-    venue_stats['fielding_first_wins'] = venue_stats['total_matches'] - venue_stats['batting_first_wins']
-    venue_stats['avg_wickets_fallen'] = 8.0  # Default
-    venue_stats['pitch_conditions'] = 'Balanced'
-    venue_stats['weather_impact'] = 1.0
-    
-    venue_stats.to_sql('venue_stats', conn, if_exists='append', index=False)
-    print(f"✅ Loaded venue statistics for {len(venue_stats)} venues")
-    
-    # Calculate head-to-head records
-    print("Calculating head-to-head records...")
-    h2h_data = []
-    for team_a in train_df['team_id'].unique():
-        for team_b in train_df['team_id'].unique():
-            if team_a != team_b:
-                matches = train_df[((train_df['team_id'] == team_a) & (train_df['opposition'] == team_b)) | 
-                                 ((train_df['team_id'] == team_b) & (train_df['opposition'] == team_a))]
-                if len(matches) > 0:
-                    team_a_wins = len(matches[matches['match_winner'] == team_a])
-                    team_b_wins = len(matches[matches['match_winner'] == team_b])
-                    ties = len(matches) - team_a_wins - team_b_wins
-                    
-                    h2h_data.append({
-                        'team_a_id': team_a,
-                        'team_b_id': team_b,
-                        'total_matches': len(matches),
-                        'team_a_wins': team_a_wins,
-                        'team_b_wins': team_b_wins,
-                        'ties': ties,
-                        'avg_runs_team_a': matches[matches['team_id'] == team_a]['total_runs'].mean(),
-                        'avg_runs_team_b': matches[matches['team_id'] == team_b]['total_runs'].mean(),
-                        'last_meeting_date': matches['date'].max(),
-                        'last_meeting_winner_id': matches.iloc[-1]['match_winner']
-                    })
-    
-    h2h_df = pd.DataFrame(h2h_data)
-    h2h_df.to_sql('head_to_head', conn, if_exists='append', index=False)
-    print(f"✅ Loaded {len(h2h_df)} head-to-head records")
-    
-    # Load model performance data
-    print("Loading model performance data...")
-    if os.path.exists('../models/mixed_features_model_comparison.csv'):
-        model_perf_df = pd.read_csv('../models/mixed_features_model_comparison.csv')
-        model_perf_df['test_date'] = datetime.now().date()
-        model_perf_df.to_sql('model_performance', conn, if_exists='append', index=False)
-        print(f"✅ Loaded model performance data")
-    
     conn.commit()
-    print("\n🎉 Database setup complete!")
-    
-    # Print summary
-    cursor = conn.cursor()
-    tables = ['teams', 'venues', 'players', 'matches', 'team_performances', 
-              'venue_stats', 'head_to_head', 'model_performance']
-    
-    print("\n📊 Database Summary:")
-    for table in tables:
-        count = cursor.execute(f'SELECT COUNT(*) FROM {table}').fetchone()[0]
-        print(f"   {table}: {count:,} records")
-    
+    print("Tables created successfully!")
+
+    # Load training dataset to get actual T20 player IDs
+    print("Loading training dataset to extract T20 players...")
+    try:
+        train_df = pd.read_csv('../data/enhanced_train_dataset.csv')
+        print(f"Loaded training dataset with {len(train_df)} matches")
+        
+        # Extract all unique player IDs from team_player_ids column
+        all_player_ids = set()
+        for _, row in train_df.iterrows():
+            if pd.notna(row['team_player_ids']):
+                try:
+                    # Parse the list of player IDs
+                    player_ids = ast.literal_eval(row['team_player_ids'])
+                    if isinstance(player_ids, list):
+                        all_player_ids.update(player_ids)
+                except:
+                    continue
+        
+        print(f"Found {len(all_player_ids)} unique T20 player IDs in training data")
+        
+        # Load teams from team_lookup.csv
+        print("Loading teams...")
+        teams_df = pd.read_csv('../data/team_lookup.csv')
+        teams_df['country'] = teams_df['team_name'].apply(lambda x: x.split()[-1] if ' ' in x else x)
+        teams_df['team_type'] = 'International'
+        teams_df['is_active'] = True
+        
+        for _, row in teams_df.iterrows():
+            cursor.execute('''
+                INSERT INTO teams (team_id, team_name, country, team_type, is_active)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (row['team_id'], row['team_name'], row['country'], row['team_type'], row['is_active']))
+        
+        print(f"Loaded {len(teams_df)} teams")
+
+        # Load venues from venue_lookup.csv
+        print("Loading venues...")
+        venues_df = pd.read_csv('../data/venue_lookup.csv')
+        venues_df['city'] = venues_df['venue_name'].apply(lambda x: x.split(',')[0] if ',' in x else 'Unknown')
+        venues_df['country'] = venues_df['venue_name'].apply(lambda x: x.split(',')[-1].strip() if ',' in x else 'Unknown')
+        venues_df['capacity'] = 50000
+        venues_df['venue_type'] = 'Stadium'
+        venues_df['pitch_type'] = 'Balanced'
+        venues_df['is_active'] = True
+        
+        for _, row in venues_df.iterrows():
+            cursor.execute('''
+                INSERT INTO venues (venue_id, venue_name, city, country, capacity, venue_type, pitch_type, is_active)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (row['venue_id'], row['venue_name'], row['city'], row['country'], 
+                  row['capacity'], row['venue_type'], row['pitch_type'], row['is_active']))
+        
+        print(f"Loaded {len(venues_df)} venues")
+
+        # Load only T20 players from player_lookup.csv
+        print("Loading T20 players only...")
+        players_df = pd.read_csv('../data/player_lookup.csv')
+        
+        # Filter to only include players who were in T20 matches
+        t20_players_df = players_df[players_df['player_id'].isin(all_player_ids)]
+        print(f"Filtered to {len(t20_players_df)} T20 players (from {len(players_df)} total players)")
+        
+        # Add proper roles and countries
+        def assign_player_role(name):
+            name_lower = name.lower()
+            
+            # Wicket-keepers
+            if any(term in name_lower for term in ['dhoni', 'pant', 'buttler', 'carey', 'rizwan', 'klaasen', 'de kock']):
+                return 'Wicket-keeper'
+            
+            # Bowlers
+            if any(term in name_lower for term in ['bumrah', 'shami', 'starc', 'cummins', 'archer', 'rabada', 'afridi', 'rauf', 'ali', 'shah', 'lyon', 'rashid', 'chahal', 'jadeja', 'ashwin']):
+                return 'Bowler'
+            
+            # All-rounders
+            if any(term in name_lower for term in ['jadeja', 'pandya', 'stokes', 'maxwell', 'shadab', 'nawaz', 'jansen', 'curran', 'woakes', 'ali']):
+                return 'All-rounder'
+            
+            # Batsmen
+            if any(term in name_lower for term in ['kohli', 'rohit', 'sharma', 'smith', 'warner', 'root', 'babar', 'azam', 'fakhar', 'zaman', 'imam', 'faf', 'miller', 'markram', 'finch', 'bairstow']):
+                return 'Batsman'
+            
+            return 'All-rounder'  # Default
+        
+        def assign_country(name):
+            name_lower = name.lower()
+            
+            if any(term in name_lower for term in ['kohli', 'rohit', 'sharma', 'dhoni', 'bumrah', 'pandya', 'jadeja', 'pant', 'rahul', 'shami', 'chahal', 'kumar', 'singh', 'patel', 'gupta']):
+                return 'India'
+            elif any(term in name_lower for term in ['babar', 'azam', 'afridi', 'rizwan', 'fakhar', 'zaman', 'shadab', 'rauf', 'ali', 'shah', 'khan', 'ahmed', 'hussain', 'nawaz']):
+                return 'Pakistan'
+            elif any(term in name_lower for term in ['smith', 'warner', 'cummins', 'starc', 'maxwell', 'hazlewood', 'finch', 'carey', 'lyon', 'stoins', 'archer', 'wood']):
+                return 'Australia'
+            elif any(term in name_lower for term in ['root', 'stokes', 'buttler', 'archer', 'bairstow', 'ali', 'woakes', 'rashid', 'wood', 'curran']):
+                return 'England'
+            elif any(term in name_lower for term in ['de kock', 'rabada', 'du plessis', 'miller', 'ngidi', 'shamsi', 'markram', 'jansen', 'klaasen', 'nortje']):
+                return 'South Africa'
+            elif any(term in name_lower for term in ['williamson', 'boult', 'southee', 'taylor', 'latham', 'santner', 'ferguson', 'conway']):
+                return 'New Zealand'
+            elif any(term in name_lower for term in ['mendis', 'perera', 'mathews', 'shanaka', 'karunaratne', 'fernando', 'rajapaksa']):
+                return 'Sri Lanka'
+            elif any(term in name_lower for term in ['mushfiqur', 'tamim', 'mahmudullah', 'shakib', 'mustafizur', 'liton', 'soumya']):
+                return 'Bangladesh'
+            elif any(term in name_lower for term in ['rashid', 'mujeeb', 'najibullah', 'shahidi', 'ibrahim', 'gurbaz']):
+                return 'Afghanistan'
+            else:
+                return 'Unknown'
+        
+        # Add roles and countries
+        t20_players_df['player_role'] = t20_players_df['player_name'].apply(assign_player_role)
+        t20_players_df['country'] = t20_players_df['player_name'].apply(assign_country)
+        t20_players_df['batting_style'] = 'Right-handed'
+        t20_players_df['bowling_style'] = 'Right-arm medium'
+        t20_players_df['is_active'] = True
+        
+        # Insert T20 players
+        for _, row in t20_players_df.iterrows():
+            cursor.execute('''
+                INSERT INTO players (player_id, player_name, country, batting_style, bowling_style, player_role, is_active)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', (row['player_id'], row['player_name'], row['country'], 
+                  row['batting_style'], row['bowling_style'], row['player_role'], row['is_active']))
+        
+        print(f"Loaded {len(t20_players_df)} T20 players")
+        
+        # Show some examples
+        cursor.execute('''
+            SELECT player_name, country, player_role 
+            FROM players 
+            WHERE player_name IN ('Virat Kohli', 'Wasim Akram', 'Sachin Tendulkar', 'MS Dhoni', 'Rohit Sharma', 'Jasprit Bumrah')
+            ORDER BY player_name
+        ''')
+        examples = cursor.fetchall()
+        
+        print("\nFamous T20 players in database:")
+        for name, country, role in examples:
+            print(f"  {name} - {country} - {role}")
+        
+        # Show role distribution
+        cursor.execute('SELECT player_role, COUNT(*) FROM players GROUP BY player_role ORDER BY COUNT(*) DESC')
+        roles = cursor.fetchall()
+        
+        print(f"\nRole distribution:")
+        for role, count in roles:
+            print(f"  {role}: {count} players")
+        
+    except Exception as e:
+        print(f"Error loading data: {e}")
+
+    conn.commit()
     conn.close()
-    return "database/cricket_prediction.db"
+    print(f"\nT20-only database created successfully!")
+    print(f"Database: {db_path}")
+    print("Only players who actually played T20 matches are included!")
 
 if __name__ == "__main__":
-    print("🏏 Cricket Score Prediction - Complete Database Setup")
-    print("=" * 60)
-    
-    # Create database
-    conn = create_database()
-    
-    # Load data
-    db_path = load_data(conn)
-    
-    print(f"\n🎉 Setup complete! Database: {db_path}")
-    print("🚀 Ready for frontend integration!")
+    import os
+    create_t20_only_database()

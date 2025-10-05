@@ -77,16 +77,16 @@ function App() {
     }
   };
 
-  const handlePlayerSelection = (teamType, playerId, playerName) => {
+  const handlePlayerSelection = (teamType, playerId, playerName, playerCountry, playerRole) => {
     if (teamType === 'A') {
       setTeamA(prev => ({
         ...prev,
-        players: [...prev.players, { id: playerId, name: playerName }]
+        players: [...prev.players, { id: playerId, name: playerName, country: playerCountry, role: playerRole }]
       }));
     } else {
       setTeamB(prev => ({
         ...prev,
-        players: [...prev.players, { id: playerId, name: playerName }]
+        players: [...prev.players, { id: playerId, name: playerName, country: playerCountry, role: playerRole }]
       }));
     }
   };
