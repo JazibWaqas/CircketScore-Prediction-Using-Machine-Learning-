@@ -437,7 +437,7 @@ def predict_score():
                 'team_a': team_a['team_name'],
                 'team_b': team_b['team_name'],
                 'venue': venue['venue_name'],
-                'tournament': tournament_type.replace('_', ' ').title() if tournament_type else 'Bilateral',
+                'tournament': match_context.get('tournamentType', 'Bilateral').replace('_', ' ').title(),
                 'predicted_score_a': round(predicted_score_a, 1),
                 'predicted_score_b': round(predicted_score_b, 1),
                 'predicted_winner': winner,
