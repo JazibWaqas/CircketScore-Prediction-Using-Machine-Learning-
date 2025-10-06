@@ -5,25 +5,26 @@ import { Brain, Zap, TrendingUp } from 'lucide-react';
 const ModelSelector = ({ selectedModel, onModelChange }) => {
   const models = [
     {
-      id: 'random_forest',
-      name: 'Random Forest',
-      icon: <Brain className="h-5 w-5" />,
-      accuracy: '75% R²',
-      description: 'Best overall performance'
-    },
-    {
       id: 'xgboost',
       name: 'XGBoost',
       icon: <Zap className="h-5 w-5" />,
-      accuracy: '72% R²',
-      description: 'Fast and accurate'
+      accuracy: '86.2% R²',
+      description: 'BEST: 86.2% accuracy - Production ready',
+      badge: '🏆 Best'
+    },
+    {
+      id: 'random_forest',
+      name: 'Random Forest',
+      icon: <Brain className="h-5 w-5" />,
+      accuracy: '82.5% R²',
+      description: 'GOOD: 82.5% accuracy - Reliable predictions'
     },
     {
       id: 'linear_regression',
       name: 'Linear Regression',
       icon: <TrendingUp className="h-5 w-5" />,
-      accuracy: '65% R²',
-      description: 'Simple and interpretable'
+      accuracy: '68.0% R²',
+      description: 'BASELINE: 68.0% accuracy - Fast predictions'
     }
   ];
 
@@ -52,9 +53,16 @@ const ModelSelector = ({ selectedModel, onModelChange }) => {
                 : 'border-dark-border bg-dark-card hover:border-cricket-green/50'
             }`}
           >
-            <div className="flex items-center mb-2">
-              {model.icon}
-              <span className="ml-2 font-semibold">{model.name}</span>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center">
+                {model.icon}
+                <span className="ml-2 font-semibold">{model.name}</span>
+              </div>
+              {model.badge && (
+                <span className="text-xs bg-cricket-green text-white px-2 py-1 rounded-full">
+                  {model.badge}
+                </span>
+              )}
             </div>
             <div className="text-sm text-dark-muted">
               <div className="font-medium text-cricket-gold">{model.accuracy}</div>

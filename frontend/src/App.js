@@ -17,7 +17,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [prediction, setPrediction] = useState(null);
   const [isPredicting, setIsPredicting] = useState(false);
-  const [selectedModel, setSelectedModel] = useState('random_forest');
+  const [selectedModel, setSelectedModel] = useState('xgboost');
   
   // Team selection state
   const [teamA, setTeamA] = useState({
@@ -31,7 +31,7 @@ function App() {
     players: []
   });
   
-  // Match context state - ALL features needed for ML model
+  // Match context state - ONLY features the model actually uses
   const [matchContext, setMatchContext] = useState({
     venue: null,
     date: new Date(),
@@ -39,19 +39,12 @@ function App() {
     tossWinner: null,
     tossDecision: null,
     tournamentType: '',
-    isHomeTeam: false,
-    isFinal: false,
-    isSemiFinal: false,
-    isPlayoff: false,
-    isT20WorldCup: false,
-    isIPL: false,
-    isBilateral: false,
-    isImportantMatch: false,
-    seasonYear: 2024,
-    seasonMonth: 6,
+    seasonYear: 2025,
+    seasonMonth: 1,
     isWinter: false,
     isSummer: true,
-    isMonsoon: false
+    isMonsoon: false,
+    gender: 'male'
   });
 
   useEffect(() => {
@@ -87,16 +80,16 @@ function App() {
     }
   };
 
-  const handlePlayerSelection = (teamType, playerId, playerName, playerCountry, playerRole) => {
+  const handlePlayerSelection = (teamType, playerId, playerName, playerCountry) => {
     if (teamType === 'A') {
       setTeamA(prev => ({
         ...prev,
-        players: [...prev.players, { id: playerId, name: playerName, country: playerCountry, role: playerRole }]
+        players: [...prev.players, { id: playerId, name: playerName, country: playerCountry, role: 'player' }]
       }));
     } else {
       setTeamB(prev => ({
         ...prev,
-        players: [...prev.players, { id: playerId, name: playerName, country: playerCountry, role: playerRole }]
+        players: [...prev.players, { id: playerId, name: playerName, country: playerCountry, role: 'player' }]
       }));
     }
   };
@@ -159,19 +152,12 @@ function App() {
       tossWinner: null,
       tossDecision: null,
       tournamentType: '',
-      isHomeTeam: false,
-      isFinal: false,
-      isSemiFinal: false,
-      isPlayoff: false,
-      isT20WorldCup: false,
-      isIPL: false,
-      isBilateral: false,
-      isImportantMatch: false,
-      seasonYear: 2024,
-      seasonMonth: 6,
+      seasonYear: 2025,
+      seasonMonth: 1,
       isWinter: false,
       isSummer: true,
-      isMonsoon: false
+      isMonsoon: false,
+      gender: 'male'
     });
     setPrediction(null);
   };

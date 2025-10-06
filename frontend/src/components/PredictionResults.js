@@ -112,9 +112,9 @@ const PredictionResults = ({ prediction }) => {
         >
           <Target className="h-8 w-8 text-cricket-green mx-auto mb-2" />
           <div className="text-2xl font-bold text-cricket-green">
-            {Math.round(prediction.confidence * 100)}%
+            {prediction.model_accuracy || Math.round(prediction.confidence * 100) + '%'}
           </div>
-          <div className="text-sm text-dark-muted">Confidence</div>
+          <div className="text-sm text-dark-muted">Model Accuracy</div>
         </motion.div>
 
         {/* Model Used */}

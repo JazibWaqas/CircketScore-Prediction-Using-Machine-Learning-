@@ -144,12 +144,27 @@ const MatchContext = ({ venues, teams, context, onContextChange }) => {
           </label>
           <input
             type="number"
-            value={context.seasonYear || 2024}
+            value={context.seasonYear || 2025}
             onChange={(e) => handleChange('seasonYear', parseInt(e.target.value))}
             className="cricket-input w-full"
             min="2005"
             max="2030"
           />
+        </div>
+
+        {/* Gender Selection */}
+        <div>
+          <label className="block text-sm font-medium text-dark-muted mb-2">
+            Match Type
+          </label>
+          <select
+            value={context.gender || 'male'}
+            onChange={(e) => handleChange('gender', e.target.value)}
+            className="cricket-select w-full"
+          >
+            <option value="male">Men's Cricket</option>
+            <option value="female">Women's Cricket</option>
+          </select>
         </div>
       </div>
 
@@ -254,132 +269,42 @@ const MatchContext = ({ venues, teams, context, onContextChange }) => {
             </div>
           </div>
 
-          {/* Match Context Options */}
+          {/* Match Context Options - ONLY FEATURES MODEL USES */}
           <div className="mt-6">
-            <h4 className="text-sm font-medium text-dark-muted mb-4">Match Context</h4>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {/* Home Team Advantage */}
-              <label className="flex items-center space-x-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={context.isHomeTeam}
-                  onChange={(e) => handleChange('isHomeTeam', e.target.checked)}
-                  className="w-4 h-4 text-cricket-green bg-dark-card border-dark-border rounded focus:ring-cricket-green"
-                />
-                <div className="flex items-center">
-                  <Home className="h-4 w-4 mr-1 text-dark-muted" />
-                  <span className="text-sm text-dark-text">Home Advantage</span>
+            <h4 className="text-sm font-medium text-dark-muted mb-4">Match Context (Model Features)</h4>
+            <div className="bg-cricket-green/10 border border-cricket-green/30 rounded-lg p-4">
+              <div className="text-sm text-dark-muted mb-2">
+                <strong>✅ These options directly affect the model's predictions:</strong>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div className="flex items-center text-cricket-green">
+                  <Trophy className="h-4 w-4 mr-2" />
+                  <span><strong>Tournament Type:</strong> Affects match intensity and scoring patterns</span>
                 </div>
-              </label>
-
-              {/* Final Match */}
-              <label className="flex items-center space-x-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={context.isFinal}
-                  onChange={(e) => handleChange('isFinal', e.target.checked)}
-                  className="w-4 h-4 text-cricket-green bg-dark-card border-dark-border rounded focus:ring-cricket-green"
-                />
-                <div className="flex items-center">
-                  <Trophy className="h-4 w-4 mr-1 text-dark-muted" />
-                  <span className="text-sm text-dark-text">Final Match</span>
+                <div className="flex items-center text-cricket-green">
+                  <span className="mr-2">⚡</span>
+                  <span><strong>Toss Decision:</strong> Batting first vs fielding first impact</span>
                 </div>
-              </label>
-
-              {/* Semi Final */}
-              <label className="flex items-center space-x-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={context.isSemiFinal}
-                  onChange={(e) => handleChange('isSemiFinal', e.target.checked)}
-                  className="w-4 h-4 text-cricket-green bg-dark-card border-dark-border rounded focus:ring-cricket-green"
-                />
-                <div className="flex items-center">
-                  <Trophy className="h-4 w-4 mr-1 text-dark-muted" />
-                  <span className="text-sm text-dark-text">Semi Final</span>
+                <div className="flex items-center text-cricket-green">
+                  <span className="mr-2">👥</span>
+                  <span><strong>Gender:</strong> Men's vs Women's cricket differences</span>
                 </div>
-              </label>
-
-              {/* Playoff */}
-              <label className="flex items-center space-x-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={context.isPlayoff}
-                  onChange={(e) => handleChange('isPlayoff', e.target.checked)}
-                  className="w-4 h-4 text-cricket-green bg-dark-card border-dark-border rounded focus:ring-cricket-green"
-                />
-                <div className="flex items-center">
-                  <Trophy className="h-4 w-4 mr-1 text-dark-muted" />
-                  <span className="text-sm text-dark-text">Playoff</span>
+                <div className="flex items-center text-cricket-green">
+                  <span className="mr-2">📅</span>
+                  <span><strong>Season:</strong> Weather and pitch conditions</span>
                 </div>
-              </label>
-
-              {/* T20 World Cup */}
-              <label className="flex items-center space-x-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={context.isT20WorldCup}
-                  onChange={(e) => handleChange('isT20WorldCup', e.target.checked)}
-                  className="w-4 h-4 text-cricket-green bg-dark-card border-dark-border rounded focus:ring-cricket-green"
-                />
-                <div className="flex items-center">
-                  <Trophy className="h-4 w-4 mr-1 text-dark-muted" />
-                  <span className="text-sm text-dark-text">T20 World Cup</span>
-                </div>
-              </label>
-
-              {/* IPL */}
-              <label className="flex items-center space-x-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={context.isIPL}
-                  onChange={(e) => handleChange('isIPL', e.target.checked)}
-                  className="w-4 h-4 text-cricket-green bg-dark-card border-dark-border rounded focus:ring-cricket-green"
-                />
-                <div className="flex items-center">
-                  <Trophy className="h-4 w-4 mr-1 text-dark-muted" />
-                  <span className="text-sm text-dark-text">IPL</span>
-                </div>
-              </label>
-
-              {/* Bilateral Series */}
-              <label className="flex items-center space-x-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={context.isBilateral}
-                  onChange={(e) => handleChange('isBilateral', e.target.checked)}
-                  className="w-4 h-4 text-cricket-green bg-dark-card border-dark-border rounded focus:ring-cricket-green"
-                />
-                <div className="flex items-center">
-                  <Home className="h-4 w-4 mr-1 text-dark-muted" />
-                  <span className="text-sm text-dark-text">Bilateral Series</span>
-                </div>
-              </label>
-
-              {/* Important Match */}
-              <label className="flex items-center space-x-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={context.isImportantMatch}
-                  onChange={(e) => handleChange('isImportantMatch', e.target.checked)}
-                  className="w-4 h-4 text-cricket-green bg-dark-card border-dark-border rounded focus:ring-cricket-green"
-                />
-                <div className="flex items-center">
-                  <Zap className="h-4 w-4 mr-1 text-dark-muted" />
-                  <span className="text-sm text-dark-text">Important Match</span>
-                </div>
-              </label>
+              </div>
             </div>
           </div>
 
-      {/* Context Summary */}
-      {(context.venue || context.tossWinner || context.battingFirst) && (
+      {/* Context Summary - ONLY MODEL-RELEVANT INFO */}
+      {(context.venue || context.tournamentType || context.tossWinner || context.battingFirst || context.gender) && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           className="mt-6 p-4 bg-cricket-green/10 border border-cricket-green/30 rounded-lg"
         >
-          <h4 className="text-sm font-medium text-cricket-green mb-2">Match Summary</h4>
+          <h4 className="text-sm font-medium text-cricket-green mb-2">Model Input Summary</h4>
           <div className="text-sm text-dark-muted space-y-1">
             {context.venue && <div>📍 Venue: {context.venue.venue_name}</div>}
             {context.tournamentType && <div>🏆 Tournament: {context.tournamentType.replace('_', ' ').toUpperCase()}</div>}
@@ -387,14 +312,7 @@ const MatchContext = ({ venues, teams, context, onContextChange }) => {
             {context.tossDecision && <div>⚡ Decision: {context.tossDecision}</div>}
             {context.battingFirst && <div>🏏 Batting First: {context.battingFirst.team_name}</div>}
             <div>📅 Season: {context.seasonYear} - {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][context.seasonMonth-1]}</div>
-            {context.isFinal && <div>🏆 Final Match</div>}
-            {context.isSemiFinal && <div>🏆 Semi Final</div>}
-            {context.isPlayoff && <div>🏆 Playoff</div>}
-            {context.isT20WorldCup && <div>🌍 T20 World Cup</div>}
-            {context.isIPL && <div>🏏 IPL</div>}
-            {context.isBilateral && <div>🤝 Bilateral Series</div>}
-            {context.isImportantMatch && <div>⭐ Important Match</div>}
-            {context.isHomeTeam && <div>🏠 Home Advantage</div>}
+            {context.gender && <div>👥 Match Type: {context.gender === 'male' ? "Men's Cricket" : "Women's Cricket"}</div>}
             {context.isWinter && <div>❄️ Winter Season</div>}
             {context.isSummer && <div>☀️ Summer Season</div>}
             {context.isMonsoon && <div>🌧️ Monsoon Season</div>}

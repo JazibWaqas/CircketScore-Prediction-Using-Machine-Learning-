@@ -1,71 +1,68 @@
-# Cricket Prediction Database
+# Database API
 
-This folder contains the database and API for the cricket score prediction system.
+This folder contains the Flask API server for cricket score predictions.
 
 ## Files
 
-- **`cricket_prediction.db`** - SQLite database with T20 players, teams, and venues
-- **`app.py`** - Flask API server for the cricket prediction system
-- **`setup_database.py`** - Script to create the T20-only database
-- **`requirements.txt`** - Python dependencies
+- `run.py` - Original API (outdated, references old lookup tables)
+- `run_clean.py` - **NEW CLEAN API** that works with our final training dataset
+- `setup_database.py` - Database setup script
+- `requirements.txt` - Python dependencies
+- `cricket_prediction.db` - SQLite database (if used)
 
-## Database Contents
+## Usage
 
-- **8,321 T20 Players** - Only players who actually played T20 cricket
-- **172 Teams** - International and franchise teams
-- **503 Venues** - Cricket stadiums worldwide
-- **Clean Data** - No players who never played T20 (like Wasim Akram, Sachin Tendulkar)
+### Clean API (Recommended)
+```bash
+cd Database
+python run_clean.py
+```
 
-## How to Run
+### Original API (Legacy)
+```bash
+cd Database
+python run.py
+```
 
-1. **Setup Database** (if needed):
-   ```bash
-   python setup_database.py
-   ```
+## API Endpoints
 
-2. **Start API Server**:
-   ```bash
-   python app.py
-   ```
+- `POST /predict` - Make cricket score predictions
+- `GET /health` - Health check
+- `GET /models` - Model information
 
-3. **API Endpoints**:
-   - `GET /api/teams` - Get all teams
-   - `GET /api/venues` - Get all venues  
-   - `GET /api/players` - Get all T20 players
-   - `POST /api/predict` - Make score predictions
-   - `GET /api/health` - Health check
+## Requirements
 
-## Database Schema
+The API expects trained models in the `../models/` folder:
+- `final_random_forest.pkl`
+- `final_xgboost.pkl`
+- `final_linear_regression.pkl`
+- `final_scaler.pkl`
+- `final_encoders.pkl`
 
-### Players Table
-- `player_id` - Unique player ID
-- `player_name` - Full player name
-- `country` - Player's country
-- `player_role` - Batsman, Bowler, Wicket-keeper, All-rounder
-- `batting_style` - Right-handed, Left-handed
-- `bowling_style` - Bowling style
-- `is_active` - Active status
+And training data in `../processed_data/final_training_dataset.csv`
 
-### Teams Table
-- `team_id` - Unique team ID
-- `team_name` - Team name
-- `country` - Team's country
-- `team_type` - International, Franchise
-- `is_active` - Active status
+## Example Request
 
-### Venues Table
-- `venue_id` - Unique venue ID
-- `venue_name` - Venue name
-- `city` - City
-- `country` - Country
-- `capacity` - Stadium capacity
-- `venue_type` - Stadium type
-- `pitch_type` - Batting, Bowling, Balanced
-- `is_active` - Active status
+```json
+{
+  "team": "India",
+  "opposition": "Australia",
+  "venue": "Melbourne Cricket Ground"
+}
+```
 
-## Notes
+## Example Response
 
-- Database contains only T20 players from the training dataset
-- All players have actually played T20 cricket
-- Legendary players like Wasim Akram, Sachin Tendulkar are excluded (never played T20)
-- Modern T20 stars like Virat Kohli, MS Dhoni, Jasprit Bumrah are included
+```json
+{
+  "predictions": {
+    "random_forest": 145.2,
+    "xgboost": 142.8,
+    "linear_regression": 138.5
+  },
+  "average_prediction": 142.2,
+  "team": "India",
+  "opposition": "Australia",
+  "venue": "Melbourne Cricket Ground"
+}
+```

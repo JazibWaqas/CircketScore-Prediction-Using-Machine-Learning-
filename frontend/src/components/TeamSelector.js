@@ -29,9 +29,9 @@ const TeamSelector = ({
     }
   };
 
-  const handlePlayerAdd = (playerId, playerName, playerCountry, playerRole) => {
+  const handlePlayerAdd = (playerId, playerName, playerCountry) => {
     if (team.players.length < 11) {
-      onPlayerSelect(teamType, playerId, playerName, playerCountry, playerRole);
+      onPlayerSelect(teamType, playerId, playerName, playerCountry);
       setShowPlayerDropdown(false);
       setSearchQuery('');
     }
@@ -57,7 +57,7 @@ const TeamSelector = ({
 
   // Get unique values for filter options
   const uniqueCountries = [...new Set(players.map(p => p.country).filter(Boolean))].sort();
-  const uniqueRoles = [...new Set(players.map(p => p.player_role).filter(Boolean))].sort();
+  const uniqueRoles = ['Batsman', 'Bowler', 'All-rounder', 'Wicket-keeper'];
   const uniqueBattingStyles = [...new Set(players.map(p => p.batting_style).filter(Boolean))].sort();
   const uniqueBowlingStyles = [...new Set(players.map(p => p.bowling_style).filter(Boolean))].sort();
 
@@ -81,9 +81,8 @@ const TeamSelector = ({
     const matchesCountryFilter = filters.countries.length === 0 || 
       filters.countries.includes(player.country);
     
-    // Filter by roles
-    const matchesRoleFilter = filters.roles.length === 0 || 
-      filters.roles.includes(player.player_role);
+    // Filter by roles (disabled - no role data available)
+    const matchesRoleFilter = true;
     
     // Filter by batting styles
     const matchesBattingFilter = filters.battingStyles.length === 0 || 
@@ -195,7 +194,7 @@ const TeamSelector = ({
                       <Settings className="h-4 w-4" />
                       Filters {showFilters ? '▼' : '▶'}
                     </button>
-                    {(filters.countries.length > 0 || filters.roles.length > 0 || filters.battingStyles.length > 0 || filters.bowlingStyles.length > 0) && (
+                    {(filters.countries.length > 0 || filters.battingStyles.length > 0 || filters.bowlingStyles.length > 0) && (
                       <button
                         onClick={clearFilters}
                         className="text-xs text-cricket-red hover:text-red-400 transition-colors"
@@ -232,23 +231,6 @@ const TeamSelector = ({
                           </div>
                         </div>
 
-                        {/* Role Filter */}
-                        <div>
-                          <label className="block text-xs font-medium text-dark-muted mb-2">Role</label>
-                          <div className="space-y-1">
-                            {uniqueRoles.map(role => (
-                              <label key={role} className="flex items-center gap-2 text-xs">
-                                <input
-                                  type="checkbox"
-                                  checked={filters.roles.includes(role)}
-                                  onChange={() => handleFilterChange('roles', role)}
-                                  className="rounded border-dark-border"
-                                />
-                                <span className="text-dark-text">{role}</span>
-                              </label>
-                            ))}
-                          </div>
-                        </div>
 
                         {/* Batting Style Filter */}
                         <div>
@@ -291,7 +273,7 @@ const TeamSelector = ({
                   
                   <div className="mb-2 text-sm text-dark-muted">
                     {filteredPlayers.length} players found
-                    {(filters.countries.length > 0 || filters.roles.length > 0 || filters.battingStyles.length > 0 || filters.bowlingStyles.length > 0) && (
+                    {(filters.countries.length > 0 || filters.battingStyles.length > 0 || filters.bowlingStyles.length > 0) && (
                       <span className="ml-2 text-cricket-green">
                         (Filtered)
                       </span>
@@ -302,14 +284,14 @@ const TeamSelector = ({
                       <motion.button
                         key={player.player_id}
                         whileHover={{ backgroundColor: '#00C85120' }}
-                        onClick={() => onPlayerSelect(teamType, player.player_id, player.player_name, player.country, player.player_role)}
+                        onClick={() => handlePlayerAdd(player.player_id, player.player_name, player.country)}
                         className="w-full text-left p-3 hover:bg-cricket-green/10 border-b border-dark-border last:border-b-0 transition-colors"
                       >
                         <div className="font-medium text-dark-text">
                           {player.player_name}
                         </div>
                         <div className="text-sm text-dark-muted">
-                          {player.country} • {player.player_role}
+                          {player.country}
                         </div>
                       </motion.button>
                     ))}
@@ -345,7 +327,7 @@ const TeamSelector = ({
                         {player.name}
                       </div>
                       <div className="text-sm text-dark-muted">
-                        {player.country} • {player.role}
+                          {player.country}
                       </div>
                     </div>
                   </div>
