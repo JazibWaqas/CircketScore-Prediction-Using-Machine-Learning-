@@ -1,0 +1,61 @@
+{
+  "total_records": 13514,
+  "total_features": 112,
+  "target_variable": "total_runs",
+  "target_statistics": {
+    "mean": 134.3501553944058,
+    "std": 44.28137485119317,
+    "min": "1",
+    "max": "297"
+  },
+  "feature_categories": {
+    "numerical_features": 95,
+    "categorical_features": 11,
+    "boolean_features": 6
+  },
+  "player_impact_features": [
+    "team_form_avg_runs",
+    "team_form_win_rate",
+    "team_id",
+    "team_player_ids",
+    "team_batting_avg_x",
+    "team_batting_std",
+    "team_form_score",
+    "team_balance_x",
+    "team_recent_avg",
+    "team_player_impact_mean",
+    "team_player_impact_max",
+    "team_player_impact_sum",
+    "team_player_impact_std",
+    "team_batting_avg_y",
+    "team_batting_sr",
+    "team_bowling_avg",
+    "team_bowling_econ",
+    "team_experience",
+    "team_dominant_role",
+    "team_balance_y",
+    "team_depth",
+    "team_chemistry",
+    "player_impact_ratio",
+    "team_star_power",
+    "team_consistency",
+    "team_player_impact_mean",
+    "team_player_impact_max",
+    "team_player_impact_sum",
+    "team_player_impact_std",
+    "star_players_count",
+    "star_ratio",
+    "star_impact_total",
+    "star_impact_avg",
+    "team_batting_ratio",
+    "team_bowling_ratio",
+    "team_all_rounder_ratio",
+    "is_star_heavy_team",
+    "has_star_batsman",
+    "has_star_bowler"
+  ],
+  "data_quality": {
+    "missing_values": "0",
+    "duplicate_rows": "0"
+  }
+}
