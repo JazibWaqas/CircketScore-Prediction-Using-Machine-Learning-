@@ -1,0 +1,54 @@
+{
+  "original_shape": [
+    13514,
+    95
+  ],
+  "final_shape": [
+    13514,
+    66
+  ],
+  "features_removed": 29,
+  "data_leakage_removed": [
+    "match_winner",
+    "player_of_match",
+    "is_final",
+    "is_semi_final"
+  ],
+  "constant_features_removed": [
+    "is_winter",
+    "team_player_impact_std",
+    "team_player_impact_sum",
+    "team_bowling_avg",
+    "is_important_match",
+    "team_consistency",
+    "strategic_advantage_score",
+    "venue_player_fit",
+    "team_player_impact_mean",
+    "player_impact_ratio",
+    "team_player_impact_max",
+    "experience_impact",
+    "is_home_advantage",
+    "team_experience",
+    "is_high_scoring_venue",
+    "is_t20_world_cup",
+    "is_ipl",
+    "weather_performance_impact",
+    "team_batting_sr",
+    "is_difficult_venue",
+    "team_bowling_econ",
+    "match_importance",
+    "team_star_power",
+    "is_summer",
+    "team_batting_avg_y"
+  ],
+  "strong_correlations": 15,
+  "feature_categories": {
+    "VENUE": 9,
+    "TEAM": 22,
+    "WEATHER": 4,
+    "PITCH": 6,
+    "HISTORICAL": 6,
+    "MATCH_CONTEXT": 2,
+    "DERIVED": 16
+  }
+}
