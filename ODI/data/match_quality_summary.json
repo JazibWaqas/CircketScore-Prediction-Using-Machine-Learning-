@@ -1,0 +1,12 @@
+{
+  "total_matches_processed": 5761,
+  "high_quality_matches": 2433,
+  "retention_rate": 42.2,
+  "tier_1_matches": 2241,
+  "tier_2_matches": 192,
+  "average_coverage": 93.7,
+  "date_range": {
+    "earliest": "2002-12-29",
+    "latest": "2025-09-04"
+  }
+}

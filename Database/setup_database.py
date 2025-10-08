@@ -2,6 +2,7 @@ import sqlite3
 import pandas as pd
 import json
 import ast
+import os
 
 def create_t20_only_database():
     """Create database with only T20 players from training dataset"""
@@ -14,9 +15,9 @@ def create_t20_only_database():
 
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
-
+    
     print("Creating T20-only database...")
-
+    
     # 1. Create teams table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS teams (
@@ -27,7 +28,7 @@ def create_t20_only_database():
             is_active BOOLEAN DEFAULT 1
         )
     ''')
-
+    
     # 2. Create venues table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS venues (
@@ -41,7 +42,7 @@ def create_t20_only_database():
             is_active BOOLEAN DEFAULT 1
         )
     ''')
-
+    
     # 3. Create players table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS players (
@@ -74,7 +75,7 @@ def create_t20_only_database():
             FOREIGN KEY (venue_id) REFERENCES venues (venue_id)
         )
     ''')
-
+    
     conn.commit()
     print("Tables created successfully!")
 
@@ -99,11 +100,11 @@ def create_t20_only_database():
         print(f"Found {len(all_player_ids)} unique T20 player IDs in training data")
         
         # Load teams from team_lookup.csv
-        print("Loading teams...")
-        teams_df = pd.read_csv('../data/team_lookup.csv')
-        teams_df['country'] = teams_df['team_name'].apply(lambda x: x.split()[-1] if ' ' in x else x)
-        teams_df['team_type'] = 'International'
-        teams_df['is_active'] = True
+    print("Loading teams...")
+    teams_df = pd.read_csv('../data/team_lookup.csv')
+    teams_df['country'] = teams_df['team_name'].apply(lambda x: x.split()[-1] if ' ' in x else x)
+    teams_df['team_type'] = 'International'
+    teams_df['is_active'] = True
         
         for _, row in teams_df.iterrows():
             cursor.execute('''
@@ -114,14 +115,14 @@ def create_t20_only_database():
         print(f"Loaded {len(teams_df)} teams")
 
         # Load venues from venue_lookup.csv
-        print("Loading venues...")
-        venues_df = pd.read_csv('../data/venue_lookup.csv')
-        venues_df['city'] = venues_df['venue_name'].apply(lambda x: x.split(',')[0] if ',' in x else 'Unknown')
-        venues_df['country'] = venues_df['venue_name'].apply(lambda x: x.split(',')[-1].strip() if ',' in x else 'Unknown')
+    print("Loading venues...")
+    venues_df = pd.read_csv('../data/venue_lookup.csv')
+    venues_df['city'] = venues_df['venue_name'].apply(lambda x: x.split(',')[0] if ',' in x else 'Unknown')
+    venues_df['country'] = venues_df['venue_name'].apply(lambda x: x.split(',')[-1].strip() if ',' in x else 'Unknown')
         venues_df['capacity'] = 50000
-        venues_df['venue_type'] = 'Stadium'
-        venues_df['pitch_type'] = 'Balanced'
-        venues_df['is_active'] = True
+    venues_df['venue_type'] = 'Stadium'
+    venues_df['pitch_type'] = 'Balanced'
+    venues_df['is_active'] = True
         
         for _, row in venues_df.iterrows():
             cursor.execute('''
@@ -134,7 +135,7 @@ def create_t20_only_database():
 
         # Load only T20 players from player_lookup.csv
         print("Loading T20 players only...")
-        players_df = pd.read_csv('../data/player_lookup.csv')
+    players_df = pd.read_csv('../data/player_lookup.csv')
         
         # Filter to only include players who were in T20 matches
         t20_players_df = players_df[players_df['player_id'].isin(all_player_ids)]
@@ -187,6 +188,7 @@ def create_t20_only_database():
                 return 'Unknown'
         
         # Add roles and countries
+        t20_players_df = t20_players_df.copy()
         t20_players_df['player_role'] = t20_players_df['player_name'].apply(assign_player_role)
         t20_players_df['country'] = t20_players_df['player_name'].apply(assign_country)
         t20_players_df['batting_style'] = 'Right-handed'
@@ -207,7 +209,7 @@ def create_t20_only_database():
         cursor.execute('''
             SELECT player_name, country, player_role 
             FROM players 
-            WHERE player_name IN ('Virat Kohli', 'Wasim Akram', 'Sachin Tendulkar', 'MS Dhoni', 'Rohit Sharma', 'Jasprit Bumrah')
+            WHERE player_name IN ('V Kohli', 'MS Dhoni', 'JJ Bumrah', 'R Sharma', 'Imad Wasim')
             ORDER BY player_name
         ''')
         examples = cursor.fetchall()
@@ -234,5 +236,4 @@ def create_t20_only_database():
     print("Only players who actually played T20 matches are included!")
 
 if __name__ == "__main__":
-    import os
     create_t20_only_database()
