@@ -10,7 +10,7 @@ print("VERIFYING ODI MODEL WITH REAL HISTORICAL MATCHES")
 print("="*100)
 
 # Load some real international matches from the dataset
-df = pd.read_csv(r'C:\Users\OMNIBOOK\Documents\GitHub\CircketScore-Prediction-Using-Machine-Learning-\ODI\data\odi_complete_dataset.csv')
+df = pd.read_csv(r'C:\Users\OMNIBOOK\Documents\GitHub\CircketScore-Prediction-Using-Machine-Learning-\ODI\data\CURRENT_training_data_7314_matches.csv')
 
 # Filter for international teams only
 international_teams = ['India', 'Australia', 'Pakistan', 'England', 'South Africa', 'New Zealand', 

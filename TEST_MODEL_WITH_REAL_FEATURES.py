@@ -11,23 +11,23 @@ print("="*100)
 print("TESTING MODEL WITH REAL FEATURES FROM TEST DATASET")
 print("="*100)
 
-# Load test dataset (500 matches held out from training)
-test_df = pd.read_csv(r'C:\Users\OMNIBOOK\Documents\GitHub\CircketScore-Prediction-Using-Machine-Learning-\ODI\data\odi_test_500.csv')
-print(f"\nLoaded {len(test_df)} test matches")
+# Load test dataset (500 matches held out from training) - BROKEN (missing 8 features)
+test_df = pd.read_csv(r'C:\Users\OMNIBOOK\Documents\GitHub\CircketScore-Prediction-Using-Machine-Learning-\ODI\data\BROKEN_test_data_missing_8_features.csv')
+print(f"\nLoaded {len(test_df)} test matches (WARNING: Missing 8 critical features)")
 
 # Load model files
 odi_dir = r'C:\Users\OMNIBOOK\Documents\GitHub\CircketScore-Prediction-Using-Machine-Learning-\ODI'
 
 try:
-    with open(os.path.join(odi_dir, 'models', 'xgboost_COMPLETE.pkl'), 'rb') as f:
+    with open(os.path.join(odi_dir, 'models', 'CURRENT_BROKEN_baseline_xgboost.pkl'), 'rb') as f:
         model = pickle.load(f)
-    print(f"[+] Loaded XGBoost model")
+    print(f"[+] Loaded XGBoost model (BROKEN - R2=0.01)")
 except Exception as e:
     print(f"[-] Could not load model: {e}")
     exit(1)
 
 try:
-    with open(os.path.join(odi_dir, 'models', 'feature_names_COMPLETE.pkl'), 'rb') as f:
+    with open(os.path.join(odi_dir, 'models', 'CURRENT_BROKEN_baseline_feature_names.pkl'), 'rb') as f:
         feature_names = pickle.load(f)
     print(f"[+] Model expects {len(feature_names)} features")
 except Exception as e:
@@ -57,7 +57,7 @@ print(f"    Target (actual scores): min={y_test.min()}, max={y_test.max()}, mean
 # Make predictions (RAW - no scaling needed if model has StandardScaler built in)
 try:
     # Try loading scaler
-    with open(os.path.join(odi_dir, 'models', 'scaler_COMPLETE.pkl'), 'rb') as f:
+    with open(os.path.join(odi_dir, 'models', 'CURRENT_BROKEN_baseline_scaler.pkl'), 'rb') as f:
         scaler = pickle.load(f)
     X_test_scaled = scaler.transform(X_test)
     predictions = model.predict(X_test_scaled)

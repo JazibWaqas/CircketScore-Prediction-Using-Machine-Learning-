@@ -28,14 +28,14 @@ CORS(app)
 
 print("Loading ODI COMPLETE prediction system...")
 
-# Load baseline COMPLETE model
+# Load baseline COMPLETE model (currently broken - R²=0.01)
 try:
-    model = joblib.load('../models/xgboost_COMPLETE.pkl')
-    scaler = joblib.load('../models/scaler_COMPLETE.pkl')
-    features = joblib.load('../models/feature_names_COMPLETE.pkl')
-    team_encoder = joblib.load('../models/team_encoder.pkl')
-    venue_encoder = joblib.load('../models/venue_encoder.pkl')
-    print("✓ Loaded baseline COMPLETE model (R²=0.69, MAE=28.67)")
+    model = joblib.load('../models/CURRENT_BROKEN_baseline_xgboost.pkl')
+    scaler = joblib.load('../models/CURRENT_BROKEN_baseline_scaler.pkl')
+    features = joblib.load('../models/CURRENT_BROKEN_baseline_feature_names.pkl')
+    team_encoder = joblib.load('../models/CURRENT_team_encoder.pkl')
+    venue_encoder = joblib.load('../models/CURRENT_venue_encoder.pkl')
+    print("✓ Loaded baseline COMPLETE model (R²=0.69 claimed, R²=0.01 actual - BROKEN)")
     print(f"✓ Model expects {len(features)} features")
 except Exception as e:
     print(f"⚠ Error loading model: {e}")
@@ -43,7 +43,7 @@ except Exception as e:
 
 # Load player coefficients
 try:
-    with open('../data/player_impact_coefficients.json', 'r', encoding='utf-8') as f:
+    with open('../data/CURRENT_player_impacts_1872_all.json', 'r', encoding='utf-8') as f:
         player_coefficients = json.load(f)
     print(f"✓ Loaded coefficients for {len(player_coefficients):,} players")
 except Exception as e:
@@ -52,7 +52,7 @@ except Exception as e:
 
 # Load player database (quality players with stats)
 try:
-    with open('../data/player_database.json', 'r', encoding='utf-8') as f:
+    with open('../data/CURRENT_player_database_977_quality.json', 'r', encoding='utf-8') as f:
         player_database = json.load(f)
     print(f"✓ Loaded player database ({len(player_database):,} quality players)")
 except Exception as e:
@@ -72,7 +72,7 @@ except Exception as e:
 
 # Load lookup tables (teams only, venues will be loaded from dataset)
 try:
-    team_lookup = pd.read_csv('../data/team_lookup.csv')
+    team_lookup = pd.read_csv('../data/CURRENT_team_lookup.csv')
     print("✓ Loaded team lookup table")
 except Exception as e:
     print(f"⚠ Error loading team lookup: {e}")
@@ -304,7 +304,7 @@ def get_venues():
     """Get ALL ODI venues from dataset with proper stats"""
     try:
         # Load the actual dataset and calculate stats for ALL venues
-        dataset = pd.read_csv('../data/odi_complete_dataset.csv')
+        dataset = pd.read_csv('../data/CURRENT_training_data_7314_matches.csv')
         
         # Group by venue and calculate statistics
         venue_stats = dataset.groupby('venue').agg({
