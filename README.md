@@ -14,10 +14,17 @@
 ### ❌ **BOTH MODELS BROKEN!**
 - **ODI Model:** R²=0.01 (claimed 0.69) - predicts ~235 runs every time
 - **T20 Model:** R²=-0.05 (claimed 0.70) - predicts ~144 runs every time
-- **Cause:** Feature mismatch + never properly validated
-- **Fix:** Rebuild BOTH models (8-12 hours)
+- **ROOT CAUSE:** **DATA LEAKAGE** - datasets include `pitch_bounce`/`pitch_swing` (can only measure AFTER match)
+- **Fix:** Rebuild datasets WITHOUT leaked features, retrain models (8-12 hours)
 
-**📄 Full Details:** [ODI/README.md](ODI/README.md)
+### 🎯 **The Discovery:**
+- ✓ **Raw data is excellent:** 13,000 matches from CricInfo (ball-by-ball)
+- ✗ **Datasets include data leakage:** `pitch_bounce` (correlation 0.556) can only be measured DURING match
+- ✗ **Model learned to rely on leaked features:** Works in training (R²=0.69), fails in real use (R²=0.01)
+- ✓ **Solution is simple:** Rebuild datasets with only pre-match features (team stats, venue history, form, toss)
+- ✓ **Expected realistic performance:** R² = 0.50-0.65 (ODI), R² = 0.45-0.55 (T20) - both PUBLISHABLE!
+
+**📄 Full Details:** [ODI/README.md](ODI/README.md) - Comprehensive explanation, rebuild plan, and testing results
 
 ---
 
@@ -197,10 +204,25 @@ Fully functional, use as reference
 
 ## 📝 **FOR TOMORROW**
 
-1. Read this README (5 min overview)
-2. Read `ODI/README.md` (10 min full details & rebuild plan)
-3. Test to verify both broken: `python TEST_T20_MODEL.py` & `python TEST_MODEL_WITH_REAL_FEATURES.py`
-4. Rebuild both models (8-12 hours total)
-5. Test thoroughly before celebrating!
+1. **Read this README** (5 min overview)
+2. **Read `ODI/README.md`** (10 min full details & rebuild plan)
+3. **Run tests** to verify: `python TEST_T20_MODEL.py` & `python TEST_MODEL_WITH_REAL_FEATURES.py`
+4. **Rebuild datasets** from raw JSON (no pitch features) - 4-6 hours
+5. **Train both models** properly - 3-4 hours
+6. **Test thoroughly** before celebrating!
 
-**Bottom Line:** Frontend perfect ✓, APIs perfect ✓, BOTH prediction models broken ❌ (1-2 days to fix)
+### **Bottom Line:**
+```
+✓ Raw data: EXCELLENT (13,000 matches from CricInfo)
+✓ Frontend: PERFECT (beautiful UI, dual format)
+✓ APIs: PERFECT (all endpoints working)
+✓ Infrastructure: PERFECT (player system, databases)
+✗ Datasets: BAD (data leakage - pitch_bounce)
+✗ Models: BROKEN (learned from leaked data)
+
+Fix: Rebuild datasets with clean features (8-12 hours)
+Expected: R² = 0.50-0.65 (realistic and publishable!)
+Doable: YES! 100% achievable in 1-2 days
+```
+
+**Your project is NOT too big. You're NOT in over your head. You just need clean datasets!** 💪
