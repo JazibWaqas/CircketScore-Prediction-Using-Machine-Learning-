@@ -9,39 +9,49 @@
 
 ### ✅ **What Works**
 - **Frontend (React):** Dual T20/ODI toggle, player selection with filters, beautiful UI
-- **ODI API (Flask):** Running on port 5001, all endpoints functional
+- **APIs (Flask):** Both T20 (port 5000) and ODI (port 5001) endpoints functional
 - **Player Database:** 1,872 players (977 with career stats and impact coefficients)
 - **Data:** 7,314 ODI matches, 378 venues, 22 teams
 
-### ❌ **What's Broken**
-- **Prediction Model:** Claims R²=0.69 but actually R²=0.01
-- **Symptoms:** Predicts ~235 runs every time, no variation
-- **Cause:** Training/test feature mismatch + model underfitting
+### ❌ **BOTH MODELS BROKEN!**
+- **ODI Model:** Claims R²=0.69 but actually R²=0.01 (predicts ~235 runs every time)
+- **T20 Model:** Claims R²=0.70 but actually R²=-0.05 (predicts ~144 runs every time)
+- **Symptoms:** No variation in predictions (std=1.0 vs actual std=45+)
+- **Cause:** Training/test feature mismatch + models never properly validated
 
 ### 🎯 **What's Needed**
-- **Action:** Rebuild model with clean features
-- **Time:** 6-8 hours
-- **Target:** R² > 0.70, MAE < 28 runs
+- **Action:** Rebuild BOTH T20 and ODI models with clean features
+- **Time:** 8-12 hours (both formats)
+- **Target ODI:** R² > 0.70, MAE < 28 runs
+- **Target T20:** R² > 0.60, MAE < 15 runs (T20 is more unpredictable)
 
 ---
 
 ## 📊 **THE PROBLEM (Verified by Testing)**
 
+### **ODI Model:**
 ```
-CLAIMED (saved in model):     ACTUAL (tested on 500 matches):
-R² = 0.69 (69%)              R² = 0.01 (1%)
-MAE = 28.67 runs             MAE = 56.5 runs
+CLAIMED:     R² = 0.69, MAE = 28.67
+ACTUAL:      R² = 0.01, MAE = 56.5
 ```
+- Predicts ~235 runs every time (std=20.8, should be 70+)
+- Australia vs India 350 actual → 200 predicted (error: -150!)
+- Only 31% within ±30 runs
 
-**Test Results:**
-- Australia vs India (350 runs actual) → 200 predicted (error: -150 runs)
-- New Zealand vs Pakistan (275 actual) → 200 predicted (error: -75 runs)
-- Only 31% predictions within ±30 runs (need 70%+)
+### **T20 Model:**
+```
+CLAIMED:     R² = 0.70, MAE = ~15
+ACTUAL:      R² = -0.05, MAE = 37.9
+```
+- Predicts ~144 runs every time (std=1.0, should be 45+)
+- West Indies 214 actual → 145 predicted (error: -69)
+- Only 31% within ±20 runs
 
-**Root Cause:**
-1. Test data missing 8 critical features: `team_encoded`, `venue_encoded`, `toss_decision_bat`, etc.
-2. Model was never properly validated after training
-3. Predictions cluster around dataset mean (235 runs) with std=20.8 (should be 70+)
+**Root Cause (Both Models):**
+1. Test data missing critical features
+2. Models never properly validated after training
+3. Predictions show almost no variation (std < 2 instead of 45-70)
+4. Both essentially predict dataset mean with no context awareness
 
 ---
 
@@ -169,15 +179,15 @@ ODI is more predictable than T20, so R² > 0.70 is achievable.
 
 ## 🚀 **QUICK COMMANDS**
 
-### **Test Current (Broken) Model:**
+### **Test Current (Broken) Models:**
 ```bash
-python TEST_MODEL_WITH_REAL_FEATURES.py
-# Shows: R²=0.01, MAE=56.5
+python TEST_T20_MODEL.py                  # T20: R²=-0.05, predicts ~144 runs
+python TEST_MODEL_WITH_REAL_FEATURES.py  # ODI: R²=0.01, predicts ~235 runs
 ```
 
 ### **Start Systems:**
 ```bash
-cd T20/Database && python run_final.py &           # Port 5000 (working)
+cd T20/Database && python run_final.py &           # Port 5000 (broken model)
 cd ODI/Database && python run_odi_api_COMPLETE.py & # Port 5001 (broken model)
 cd frontend && npm start &                          # Port 3000
 ```
@@ -185,9 +195,10 @@ cd frontend && npm start &                          # Port 3000
 ### **Test Frontend:**
 ```
 http://localhost:3000
-→ Toggle to ODI
-→ Select teams, add players
-→ Make prediction (will be wrong ~235 runs)
+→ Works beautifully (UI is perfect!)
+→ Predictions will be wrong (models broken)
+→ T20: ~144 runs every time
+→ ODI: ~235 runs every time
 ```
 
 ---

@@ -8,14 +8,14 @@
 
 ### ✅ **Working**
 - **Frontend:** Beautiful React UI with T20/ODI toggle, player search/filters ✓
-- **T20 System:** Fully functional (R² ~0.65-0.70) ✓
-- **ODI API:** All endpoints working ✓
+- **APIs:** Both T20 and ODI endpoints functional ✓
 - **Player Database:** 1,872 players with impact coefficients ✓
 
-### ❌ **Broken**
+### ❌ **BOTH MODELS BROKEN!**
 - **ODI Model:** R²=0.01 (claimed 0.69) - predicts ~235 runs every time
+- **T20 Model:** R²=-0.05 (claimed 0.70) - predicts ~144 runs every time
 - **Cause:** Feature mismatch + never properly validated
-- **Fix:** Rebuild model (6-8 hours)
+- **Fix:** Rebuild BOTH models (8-12 hours)
 
 **📄 Full Details:** [ODI/README.md](ODI/README.md)
 
@@ -93,12 +93,12 @@ python TEST_MODEL_WITH_REAL_FEATURES.py
 
 ---
 
-## 🔧 **HOW TO FIX ODI MODEL**
+## 🔧 **HOW TO FIX (Rebuild Both Models)**
 
 ### **Recommended: Rebuild from Scratch**
 
-**Why:** Clean slate, proven approach, 90% success rate  
-**Time:** 6-8 hours  
+**Why:** Both models have same fundamental issues  
+**Time:** 8-12 hours (can do T20 first as simpler)  
 **Steps:**
 
 1. **Build Simple Dataset** (2-3 hours)
@@ -197,12 +197,10 @@ Fully functional, use as reference
 
 ## 📝 **FOR TOMORROW**
 
-1. Read `ODI/README.md` (this file) - 10 min
-2. Decide: Rebuild or Fix
-3. If rebuilding: Follow 5-step plan
-4. Test thoroughly!
-5. Expected: R² > 0.70 achievable in 1 day
+1. Read this README (5 min overview)
+2. Read `ODI/README.md` (10 min full details & rebuild plan)
+3. Test to verify both broken: `python TEST_T20_MODEL.py` & `python TEST_MODEL_WITH_REAL_FEATURES.py`
+4. Rebuild both models (8-12 hours total)
+5. Test thoroughly before celebrating!
 
----
-
-**Bottom Line:** 90% complete, just need working prediction model! 🎯
+**Bottom Line:** Frontend perfect ✓, APIs perfect ✓, BOTH prediction models broken ❌ (1-2 days to fix)
