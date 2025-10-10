@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Final Cricket Score Prediction API
 Generates properly normalized features that match training data
@@ -11,6 +12,10 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import sqlite3
 import datetime
+import sys
+
+if sys.platform == 'win32':
+    sys.stdout.reconfigure(encoding='utf-8')
 
 app = Flask(__name__)
 CORS(app)

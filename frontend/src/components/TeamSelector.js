@@ -17,8 +17,8 @@ const TeamSelector = ({
   const [filters, setFilters] = useState({
     countries: [],
     roles: [],
-    battingStyles: [],
-    bowlingStyles: []
+    tiers: [],
+    hasImpact: null  // null = all, true = only with impact, false = only without
   });
 
   const handleTeamChange = (e) => {
@@ -32,7 +32,9 @@ const TeamSelector = ({
   const handlePlayerAdd = (playerId, playerName, playerCountry) => {
     if (team.players.length < 11) {
       onPlayerSelect(teamType, playerId, playerName, playerCountry);
-      setShowPlayerDropdown(false);
+      // DON'T close dropdown - keep it open for adding more players
+      // setShowPlayerDropdown(false);
+      // Clear search to show all again
       setSearchQuery('');
     }
   };
@@ -50,51 +52,51 @@ const TeamSelector = ({
     setFilters({
       countries: [],
       roles: [],
-      battingStyles: [],
-      bowlingStyles: []
+      tiers: [],
+      hasImpact: null
     });
   };
 
   // Get unique values for filter options
-  const uniqueCountries = [...new Set(players.map(p => p.country).filter(Boolean))].sort();
-  const uniqueRoles = ['Batsman', 'Bowler', 'All-rounder', 'Wicket-keeper'];
-  const uniqueBattingStyles = [...new Set(players.map(p => p.batting_style).filter(Boolean))].sort();
-  const uniqueBowlingStyles = [...new Set(players.map(p => p.bowling_style).filter(Boolean))].sort();
+  const uniqueCountries = [...new Set(players.map(p => p.country).filter(c => c && c !== 'Unknown'))].sort();
+  const uniqueRoles = [...new Set(players.map(p => p.role || p.player_role).filter(Boolean))].sort();
+  const uniqueTiers = ['elite', 'star', 'good', 'regular'];
 
   const filteredPlayers = players.filter(player => {
     const query = searchQuery.toLowerCase();
-    const name = player.player_name.toLowerCase();
+    const name = (player.player_name || player.name || '').toLowerCase();
     const country = (player.country || '').toLowerCase();
-    const role = (player.player_role || '').toLowerCase();
-    const battingStyle = (player.batting_style || '').toLowerCase();
-    const bowlingStyle = (player.bowling_style || '').toLowerCase();
+    const role = (player.role || player.player_role || '').toLowerCase();
     
-    // Text search - matches any part of name, country, or role
+    // Text search - matches name, country, or role
     const matchesText = query === '' || 
       name.includes(query) || 
       country.includes(query) || 
-      role.includes(query) ||
-      battingStyle.includes(query) ||
-      bowlingStyle.includes(query);
+      role.includes(query);
     
     // Filter by countries
     const matchesCountryFilter = filters.countries.length === 0 || 
       filters.countries.includes(player.country);
     
-    // Filter by roles (disabled - no role data available)
-    const matchesRoleFilter = true;
+    // Filter by roles
+    const matchesRoleFilter = filters.roles.length === 0 || 
+      filters.roles.includes(player.role) ||
+      filters.roles.includes(player.player_role);
     
-    // Filter by batting styles
-    const matchesBattingFilter = filters.battingStyles.length === 0 || 
-      filters.battingStyles.includes(player.batting_style);
+    // Filter by tier (elite/star/good/regular)
+    const matchesTierFilter = filters.tiers.length === 0 ||
+      filters.tiers.includes(player.tier);
     
-    // Filter by bowling styles
-    const matchesBowlingFilter = filters.bowlingStyles.length === 0 || 
-      filters.bowlingStyles.includes(player.bowling_style);
+    // Filter by has impact
+    const matchesImpactFilter = filters.hasImpact === null ||
+      (filters.hasImpact === true && player.has_impact) ||
+      (filters.hasImpact === false && !player.has_impact);
+    
+    // Not already selected
+    const notSelected = !team.players.some(p => p.id === player.player_id || p.id === player.id);
     
     return matchesText && matchesCountryFilter && matchesRoleFilter && 
-           matchesBattingFilter && matchesBowlingFilter &&
-           !team.players.some(p => p.id === player.player_id);
+           matchesTierFilter && matchesImpactFilter && notSelected;
   });
 
   return (
@@ -194,7 +196,7 @@ const TeamSelector = ({
                       <Settings className="h-4 w-4" />
                       Filters {showFilters ? '▼' : '▶'}
                     </button>
-                    {(filters.countries.length > 0 || filters.battingStyles.length > 0 || filters.bowlingStyles.length > 0) && (
+                    {(filters.countries.length > 0 || filters.roles.length > 0 || filters.tiers.length > 0 || filters.hasImpact !== null) && (
                       <button
                         onClick={clearFilters}
                         className="text-xs text-cricket-red hover:text-red-400 transition-colors"
@@ -202,6 +204,9 @@ const TeamSelector = ({
                         Clear Filters
                       </button>
                     )}
+                    <span className="text-xs text-dark-muted">
+                      {filteredPlayers.length} players
+                    </span>
                   </div>
 
                   {/* Filter Options */}
@@ -212,13 +217,15 @@ const TeamSelector = ({
                       exit={{ opacity: 0, height: 0 }}
                       className="mb-4 p-3 bg-dark-card border border-dark-border rounded-lg"
                     >
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {/* Country Filter */}
                         <div>
-                          <label className="block text-xs font-medium text-dark-muted mb-2">Country</label>
-                          <div className="max-h-24 overflow-y-auto space-y-1">
-                            {uniqueCountries.slice(0, 10).map(country => (
-                              <label key={country} className="flex items-center gap-2 text-xs">
+                          <label className="block text-xs font-medium text-dark-muted mb-2">
+                            Country ({uniqueCountries.length})
+                          </label>
+                          <div className="max-h-32 overflow-y-auto space-y-1 pr-2">
+                            {uniqueCountries.map(country => (
+                              <label key={country} className="flex items-center gap-2 text-xs hover:bg-dark-border/30 p-1 rounded">
                                 <input
                                   type="checkbox"
                                   checked={filters.countries.includes(country)}
@@ -231,74 +238,140 @@ const TeamSelector = ({
                           </div>
                         </div>
 
-
-                        {/* Batting Style Filter */}
+                        {/* Role Filter */}
                         <div>
-                          <label className="block text-xs font-medium text-dark-muted mb-2">Batting Style</label>
+                          <label className="block text-xs font-medium text-dark-muted mb-2">
+                            Role
+                          </label>
                           <div className="space-y-1">
-                            {uniqueBattingStyles.slice(0, 5).map(style => (
-                              <label key={style} className="flex items-center gap-2 text-xs">
+                            {uniqueRoles.map(role => (
+                              <label key={role} className="flex items-center gap-2 text-xs hover:bg-dark-border/30 p-1 rounded">
                                 <input
                                   type="checkbox"
-                                  checked={filters.battingStyles.includes(style)}
-                                  onChange={() => handleFilterChange('battingStyles', style)}
+                                  checked={filters.roles.includes(role)}
+                                  onChange={() => handleFilterChange('roles', role)}
                                   className="rounded border-dark-border"
                                 />
-                                <span className="text-dark-text">{style}</span>
+                                <span className="text-dark-text">{role}</span>
                               </label>
                             ))}
                           </div>
                         </div>
 
-                        {/* Bowling Style Filter */}
+                        {/* Tier & Impact Filter */}
                         <div>
-                          <label className="block text-xs font-medium text-dark-muted mb-2">Bowling Style</label>
+                          <label className="block text-xs font-medium text-dark-muted mb-2">
+                            Player Quality
+                          </label>
                           <div className="space-y-1">
-                            {uniqueBowlingStyles.slice(0, 5).map(style => (
-                              <label key={style} className="flex items-center gap-2 text-xs">
-                                <input
-                                  type="checkbox"
-                                  checked={filters.bowlingStyles.includes(style)}
-                                  onChange={() => handleFilterChange('bowlingStyles', style)}
-                                  className="rounded border-dark-border"
-                                />
-                                <span className="text-dark-text">{style}</span>
-                              </label>
-                            ))}
+                            <label className="flex items-center gap-2 text-xs hover:bg-dark-border/30 p-1 rounded">
+                              <input
+                                type="radio"
+                                checked={filters.hasImpact === true}
+                                onChange={() => setFilters(prev => ({...prev, hasImpact: true}))}
+                                className="rounded border-dark-border"
+                              />
+                              <span className="text-cricket-green">⭐ Stars Only (with impact)</span>
+                            </label>
+                            <label className="flex items-center gap-2 text-xs hover:bg-dark-border/30 p-1 rounded">
+                              <input
+                                type="radio"
+                                checked={filters.hasImpact === null}
+                                onChange={() => setFilters(prev => ({...prev, hasImpact: null}))}
+                                className="rounded border-dark-border"
+                              />
+                              <span className="text-dark-text">All Players</span>
+                            </label>
+                            
+                            <div className="mt-2 pt-2 border-t border-dark-border">
+                              <label className="block text-xs font-medium text-dark-muted mb-1">Tier</label>
+                              {uniqueTiers.map(tier => (
+                                <label key={tier} className="flex items-center gap-2 text-xs hover:bg-dark-border/30 p-1 rounded">
+                                  <input
+                                    type="checkbox"
+                                    checked={filters.tiers.includes(tier)}
+                                    onChange={() => handleFilterChange('tiers', tier)}
+                                    className="rounded border-dark-border"
+                                  />
+                                  <span className="text-dark-text capitalize">
+                                    {tier} {tier === 'elite' ? '(+15-20)' : tier === 'star' ? '(+8-12)' : tier === 'good' ? '(+3-8)' : '(0)'}
+                                  </span>
+                                </label>
+                              ))}
+                            </div>
                           </div>
                         </div>
                       </div>
                     </motion.div>
                   )}
                   
-                  <div className="mb-2 text-sm text-dark-muted">
-                    {filteredPlayers.length} players found
-                    {(filters.countries.length > 0 || filters.battingStyles.length > 0 || filters.bowlingStyles.length > 0) && (
-                      <span className="ml-2 text-cricket-green">
-                        (Filtered)
-                      </span>
+                  <div className="mb-2 flex items-center justify-between text-sm text-dark-muted">
+                    <span>
+                      Showing {Math.min(50, filteredPlayers.length)} of {filteredPlayers.length} players
+                      {(filters.countries.length > 0 || filters.roles.length > 0 || filters.tiers.length > 0 || filters.hasImpact !== null) && (
+                        <span className="ml-2 text-cricket-green">(filtered)</span>
+                      )}
+                    </span>
+                    {team.players.length >= 11 && (
+                      <span className="text-cricket-gold font-medium">Team Full ✓</span>
                     )}
                   </div>
-                  <div className="max-h-48 overflow-y-auto border border-dark-border rounded-lg bg-dark-card">
-                    {filteredPlayers.slice(0, 100).map(player => (
-                      <motion.button
-                        key={player.player_id}
-                        whileHover={{ backgroundColor: '#00C85120' }}
-                        onClick={() => handlePlayerAdd(player.player_id, player.player_name, player.country)}
-                        className="w-full text-left p-3 hover:bg-cricket-green/10 border-b border-dark-border last:border-b-0 transition-colors"
-                      >
-                        <div className="font-medium text-dark-text">
-                          {player.player_name}
-                        </div>
-                        <div className="text-sm text-dark-muted">
-                          {player.country}
-                        </div>
-                      </motion.button>
-                    ))}
+                  <div className="max-h-64 overflow-y-auto border border-dark-border rounded-lg bg-dark-card">
+                    {filteredPlayers.slice(0, 100).map(player => {
+                      const battingImpact = player.batting_impact || 0;
+                      const bowlingImpact = player.bowling_impact || 0;
+                      const totalImpact = battingImpact + bowlingImpact;
+                      const hasImpact = player.has_impact || Math.abs(totalImpact) > 0.5;
+                      
+                      return (
+                        <motion.button
+                          key={player.player_id || player.id}
+                          whileHover={{ backgroundColor: '#00C85120' }}
+                          onClick={() => handlePlayerAdd(
+                            player.player_id || player.id, 
+                            player.player_name || player.name, 
+                            player.country
+                          )}
+                          className="w-full text-left p-3 hover:bg-cricket-green/10 border-b border-dark-border last:border-b-0 transition-colors"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <div className="font-medium text-dark-text">
+                                {player.player_name || player.name}
+                                {hasImpact && (
+                                  <span className="ml-2 text-xs">
+                                    {totalImpact > 12 ? '⭐⭐' : totalImpact > 5 || totalImpact < -5 ? '⭐' : ''}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-xs text-dark-muted flex items-center gap-2">
+                                <span>{player.country}</span>
+                                {player.role && <span>• {player.role}</span>}
+                                {player.batting_avg > 0 && (
+                                  <span>• Avg: {player.batting_avg.toFixed(1)}</span>
+                                )}
+                              </div>
+                            </div>
+                            {hasImpact && (
+                              <div className={`text-xs font-semibold ml-2 ${
+                                totalImpact > 0 ? 'text-cricket-green' : 'text-red-400'
+                              }`}>
+                                {totalImpact > 0 ? '+' : ''}{totalImpact.toFixed(1)}
+                              </div>
+                            )}
+                          </div>
+                        </motion.button>
+                      );
+                    })}
+                    {filteredPlayers.length === 0 && (
+                      <div className="p-6 text-center text-dark-muted">
+                        No players found. Try adjusting your filters or search.
+                      </div>
+                    )}
                     {filteredPlayers.length > 100 && (
-                      <div className="p-3 text-center text-sm text-dark-muted border-t border-dark-border">
+                      <div className="p-3 text-center text-sm text-dark-muted border-t border-dark-border bg-dark-bg">
                         Showing first 100 of {filteredPlayers.length} results. 
-                        <br />Try a more specific search to narrow down results.
+                        <br />Use filters or search to narrow down.
                       </div>
                     )}
                   </div>

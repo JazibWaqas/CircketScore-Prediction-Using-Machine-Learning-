@@ -4,6 +4,20 @@
 
 ---
 
+## 🚨 **IMPORTANT: READ FIRST**
+
+**📚 [DOCUMENTATION INDEX](DOCUMENTATION_INDEX.md)** - All project docs in one place
+
+**⚠️ ODI Model Status:** Currently broken (R²=0.01, not 0.69 as previously claimed)  
+**📄 Read:** [ODI/START_HERE_TOMORROW.md](ODI/START_HERE_TOMORROW.md) for quick overview  
+**📄 Or:** [ODI/PROJECT_STATUS_CRITICAL_ISSUES.md](ODI/PROJECT_STATUS_CRITICAL_ISSUES.md) for full details
+
+**✅ T20 System:** Fully working (R² ~0.65-0.70)  
+**✅ Frontend:** Complete and beautiful (both T20/ODI toggle)  
+**❌ ODI Predictions:** Need model rebuild (6-8 hours work)
+
+---
+
 ## 🎯 **PROJECT VISION**
 
 Build a **realistic ODI cricket score prediction system** that truly understands cricket by:

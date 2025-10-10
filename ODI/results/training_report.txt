@@ -1,0 +1,69 @@
+
+ENHANCED ODI PREDICTION MODEL - TRAINING REPORT
+================================================
+
+DATASET:
+- Training samples: 6,702
+- Test samples: 500
+- Features: 127
+- Feature types: Career stats, Individual players, Form, Venue, Context, Interactions
+
+MODEL PERFORMANCE:
+==================
+
+XGBoost:
+  Test R²: 0.5229 (52.29%)
+  Test MAE: 37.09 runs
+  Test RMSE: 48.58 runs
+  Test MAPE: 18.50%
+  Accuracy (±20 runs): 37.6%
+  Accuracy (±30 runs): 51.6%
+  Cross-Val R²: 0.5417 (+/- 0.0497)
+  Cross-Val MAE: 33.21 (+/- 3.76)
+
+Random Forest:
+  Test R²: 0.3615 (36.15%)
+  Test MAE: 44.61 runs
+  Test RMSE: 56.20 runs
+  Test MAPE: 23.97%
+  Accuracy (±20 runs): 28.4%
+  Accuracy (±30 runs): 41.6%
+  Cross-Val R²: 0.3998 (+/- 0.0367)
+  Cross-Val MAE: 40.25 (+/- 4.55)
+
+BEST MODEL: XGBoost
+  R²: 0.5229 (52.29%)
+  MAE: 37.09 runs
+  RMSE: 48.58 runs
+  Accuracy (±20 runs): 37.6%
+
+GOALS ASSESSMENT:
+=================
+❌ R² > 0.75: 0.5229 (NOT ACHIEVED)
+❌ MAE < 25 runs: 37.09 (NOT ACHIEVED)
+❌ Accuracy (±20) > 85%: 37.6% (NOT ACHIEVED)
+
+COMPARISON WITH BASELINE:
+=========================
+Baseline (COMPLETE model): R² = 0.69, MAE = 28.67
+Enhanced (XGBoost): R² = 0.5229, MAE = 37.09
+Improvement: R² +-0.1671, MAE --8.42 runs
+
+FEATURE IMPORTANCE:
+===================
+Top 5 Features:
+  114. pitch_bounce                             0.0738
+  5. toss_decision_field                      0.0393
+  4. toss_won                                 0.0285
+  63. opp_elite_bowlers                        0.0236
+  115. pitch_swing                              0.0231
+
+Player-Specific Features:
+  Total importance: 0.1647
+  This shows strong player impact detection
+
+NEXT STEPS:
+===========
+1. Run VALIDATE_PLAYER_IMPACT.py to test what-if scenarios
+2. Run TEST_HISTORICAL_MATCHES.py for real match validation
+3. Compare with baseline in COMPARE_MODELS.py

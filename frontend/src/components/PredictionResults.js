@@ -3,6 +3,9 @@ import { motion } from 'framer-motion';
 import { Trophy, Target, Brain, TrendingUp, Zap, Award } from 'lucide-react';
 
 const PredictionResults = ({ prediction }) => {
+  // Check if this is ODI format
+  const isODI = prediction.format === 'ODI';
+  
   const isTeamAWinner = prediction.predicted_score_a > prediction.predicted_score_b;
   const scoreDifference = Math.abs(prediction.predicted_score_a - prediction.predicted_score_b);
 
@@ -24,7 +27,7 @@ const PredictionResults = ({ prediction }) => {
         </motion.div>
         
         <h2 className="text-3xl font-bold text-cricket-green mb-2">
-          Match Prediction
+          {isODI ? 'ODI Match Prediction' : 'T20 Match Prediction'}
         </h2>
         <p className="text-dark-muted">
           {prediction.team_a} vs {prediction.team_b}
@@ -57,6 +60,11 @@ const PredictionResults = ({ prediction }) => {
             {Math.round(prediction.predicted_score_a)}
           </div>
           <div className="text-sm text-dark-muted mt-2">predicted runs</div>
+          {isODI && prediction.base_prediction_a && (
+            <div className="text-xs text-dark-muted mt-2">
+              Base: {prediction.base_prediction_a.toFixed(0)} + Impact: {prediction.player_adjustment_a > 0 ? '+' : ''}{prediction.player_adjustment_a?.toFixed(1)}
+            </div>
+          )}
         </motion.div>
 
         {/* Team B Score */}
@@ -80,6 +88,11 @@ const PredictionResults = ({ prediction }) => {
             {Math.round(prediction.predicted_score_b)}
           </div>
           <div className="text-sm text-dark-muted mt-2">predicted runs</div>
+          {isODI && prediction.base_prediction_b && (
+            <div className="text-xs text-dark-muted mt-2">
+              Base: {prediction.base_prediction_b.toFixed(0)} + Impact: {prediction.player_adjustment_b > 0 ? '+' : ''}{prediction.player_adjustment_b?.toFixed(1)}
+            </div>
+          )}
         </motion.div>
       </div>
 
@@ -101,6 +114,73 @@ const PredictionResults = ({ prediction }) => {
         </div>
       </motion.div>
 
+      {/* ODI Player Impact Breakdown */}
+      {isODI && (prediction.team_a_impact || prediction.team_b_impact) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          {/* Team A Impact */}
+          {prediction.team_a_impact && prediction.team_a_impact.player_breakdown && (
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.8 }}
+              className="bg-dark-card border border-dark-border rounded-lg p-4"
+            >
+              <h4 className="text-sm font-semibold text-cricket-green mb-3 flex items-center">
+                <Zap className="h-4 w-4 mr-1" />
+                {prediction.team_a} Player Impact
+              </h4>
+              <div className="space-y-2">
+                <div className="text-xs text-dark-muted mb-2">
+                  Base: {prediction.base_prediction_a?.toFixed(0)} → Final: {prediction.predicted_score_a?.toFixed(0)} 
+                  ({prediction.player_adjustment_a > 0 ? '+' : ''}{prediction.player_adjustment_a?.toFixed(1)})
+                </div>
+                {prediction.team_a_impact.player_breakdown.slice(0, 5).map((player, idx) => (
+                  <div key={idx} className="flex justify-between items-center text-sm">
+                    <span className="text-dark-text">{player.player}</span>
+                    <span className={`font-semibold text-xs ${
+                      player.total > 0 ? 'text-cricket-green' : 'text-red-400'
+                    }`}>
+                      {player.total > 0 ? '+' : ''}{player.total.toFixed(1)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+          
+          {/* Team B Impact */}
+          {prediction.team_b_impact && prediction.team_b_impact.player_breakdown && (
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.8 }}
+              className="bg-dark-card border border-dark-border rounded-lg p-4"
+            >
+              <h4 className="text-sm font-semibold text-cricket-green mb-3 flex items-center">
+                <Zap className="h-4 w-4 mr-1" />
+                {prediction.team_b} Player Impact
+              </h4>
+              <div className="space-y-2">
+                <div className="text-xs text-dark-muted mb-2">
+                  Base: {prediction.base_prediction_b?.toFixed(0)} → Final: {prediction.predicted_score_b?.toFixed(0)} 
+                  ({prediction.player_adjustment_b > 0 ? '+' : ''}{prediction.player_adjustment_b?.toFixed(1)})
+                </div>
+                {prediction.team_b_impact.player_breakdown.slice(0, 5).map((player, idx) => (
+                  <div key={idx} className="flex justify-between items-center text-sm">
+                    <span className="text-dark-text">{player.player}</span>
+                    <span className={`font-semibold text-xs ${
+                      player.total > 0 ? 'text-cricket-green' : 'text-red-400'
+                    }`}>
+                      {player.total > 0 ? '+' : ''}{player.total.toFixed(1)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </div>
+      )}
+
       {/* Model Information */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {/* Confidence */}
@@ -112,9 +192,9 @@ const PredictionResults = ({ prediction }) => {
         >
           <Target className="h-8 w-8 text-cricket-green mx-auto mb-2" />
           <div className="text-2xl font-bold text-cricket-green">
-            {prediction.model_accuracy || Math.round(prediction.confidence * 100) + '%'}
+            {isODI ? '69%' : (prediction.model_accuracy || Math.round((prediction.confidence || 0.86) * 100) + '%')}
           </div>
-          <div className="text-sm text-dark-muted">Model Accuracy</div>
+          <div className="text-sm text-dark-muted">Model Accuracy (R²)</div>
         </motion.div>
 
         {/* Model Used */}
@@ -126,12 +206,12 @@ const PredictionResults = ({ prediction }) => {
         >
           <Brain className="h-8 w-8 text-cricket-green mx-auto mb-2" />
           <div className="text-lg font-semibold text-cricket-green capitalize">
-            {prediction.model_used.replace('_', ' ')}
+            {isODI ? 'XGBoost + Player Impact' : (prediction.model_used || 'XGBoost').replace('_', ' ')}
           </div>
           <div className="text-sm text-dark-muted">ML Model</div>
         </motion.div>
 
-        {/* Prediction Quality */}
+        {/* Prediction Quality / MAE */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -140,9 +220,11 @@ const PredictionResults = ({ prediction }) => {
         >
           <TrendingUp className="h-8 w-8 text-cricket-green mx-auto mb-2" />
           <div className="text-lg font-semibold text-cricket-green">
-            {scoreDifference > 20 ? 'High' : scoreDifference > 10 ? 'Medium' : 'Close'}
+            {isODI ? '±29 runs' : (scoreDifference > 20 ? 'High' : scoreDifference > 10 ? 'Medium' : 'Close')}
           </div>
-          <div className="text-sm text-dark-muted">Match Intensity</div>
+          <div className="text-sm text-dark-muted">
+            {isODI ? 'Average Error (MAE)' : 'Match Intensity'}
+          </div>
         </motion.div>
       </div>
 

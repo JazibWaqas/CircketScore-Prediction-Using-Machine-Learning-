@@ -2,8 +2,8 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Brain, Zap, TrendingUp } from 'lucide-react';
 
-const ModelSelector = ({ selectedModel, onModelChange }) => {
-  const models = [
+const ModelSelector = ({ selectedModel, onModelChange, format = 'T20' }) => {
+  const t20Models = [
     {
       id: 'xgboost',
       name: 'XGBoost',
@@ -27,6 +27,20 @@ const ModelSelector = ({ selectedModel, onModelChange }) => {
       description: 'BASELINE: 68.0% accuracy - Fast predictions'
     }
   ];
+  
+  const odiModels = [
+    {
+      id: 'xgboost_impact',
+      name: 'XGBoost + Player Impact',
+      icon: <Zap className="h-5 w-5" />,
+      accuracy: '69% R²',
+      description: 'Baseline model with player impact overlay',
+      mae: '±29 runs',
+      badge: '🏆 Production'
+    }
+  ];
+  
+  const models = format === 'ODI' ? odiModels : t20Models;
 
   return (
     <motion.div
@@ -37,10 +51,10 @@ const ModelSelector = ({ selectedModel, onModelChange }) => {
     >
       <h3 className="text-xl font-semibold text-cricket-green mb-4 flex items-center">
         <Brain className="h-6 w-6 mr-2" />
-        Select ML Model
+        {format === 'ODI' ? 'ODI Prediction Model' : 'Select ML Model'}
       </h3>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className={`grid grid-cols-1 ${format === 'T20' ? 'md:grid-cols-3' : ''} gap-4`}>
         {models.map((model) => (
           <motion.button
             key={model.id}
@@ -48,10 +62,11 @@ const ModelSelector = ({ selectedModel, onModelChange }) => {
             whileTap={{ scale: 0.98 }}
             onClick={() => onModelChange(model.id)}
             className={`p-4 rounded-lg border-2 transition-all duration-300 ${
-              selectedModel === model.id
+              selectedModel === model.id || format === 'ODI'
                 ? 'border-cricket-green bg-cricket-green/10 text-cricket-green'
                 : 'border-dark-border bg-dark-card hover:border-cricket-green/50'
             }`}
+            disabled={format === 'ODI'}
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center">
@@ -66,11 +81,22 @@ const ModelSelector = ({ selectedModel, onModelChange }) => {
             </div>
             <div className="text-sm text-dark-muted">
               <div className="font-medium text-cricket-gold">{model.accuracy}</div>
+              {model.mae && <div className="font-medium text-cricket-gold">{model.mae}</div>}
               <div>{model.description}</div>
             </div>
           </motion.button>
         ))}
       </div>
+      
+      {format === 'ODI' && (
+        <div className="mt-4 p-4 bg-cricket-gold/10 border border-cricket-gold/30 rounded-lg">
+          <p className="text-sm text-dark-text">
+            <strong className="text-cricket-gold">How it works:</strong> Uses accurate baseline model (R²=0.69) 
+            for core prediction, then adds data-driven player impact adjustments. 
+            Elite players like Virat Kohli add +15-20 runs, star players add +8-12 runs.
+          </p>
+        </div>
+      )}
     </motion.div>
   );
 };

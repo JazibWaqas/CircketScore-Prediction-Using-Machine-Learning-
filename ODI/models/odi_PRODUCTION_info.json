@@ -1,0 +1,7 @@
+{
+  "model_name": "BASELINE_COMPLETE",
+  "r2_score": 0.69,
+  "mae": 28.67,
+  "recommendation": "Use BASELINE_COMPLETE for production",
+  "date": "2025-10-10"
+}

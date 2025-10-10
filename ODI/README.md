@@ -1,13 +1,35 @@
-# 🏏 ODI Cricket Score Prediction - WORKING PROJECT
+# 🏏 ODI Cricket Score Prediction
 
-## ✅ **PROJECT STATUS: MODELS TRAINED & WORKING**
+## 🚨 **CRITICAL: READ THIS FIRST**
 
-**Model Performance**:
-- **R² = 0.69** (69% variance explained) ✅
-- **MAE = 28.67 runs** (±29 run accuracy) ✅
-- **Better than T20** (which got MAE = 35 runs)
+**⚠️ Model is NOT working as advertised. Claimed R²=0.69 is FALSE.**
 
-**Current Stage**: Models trained, ready for API & Frontend development
+**📄 READ IMMEDIATELY:** [PROJECT_STATUS_CRITICAL_ISSUES.md](./PROJECT_STATUS_CRITICAL_ISSUES.md)
+
+This comprehensive status file contains:
+- ✓ What's actually working
+- ✗ What's broken (model, data mismatch, underfitting)
+- 📊 Real test results (R²=0.01, not 0.69)
+- 🛠️ What needs to be done
+- 🎯 Step-by-step rebuild plan
+
+**Last Verified:** October 10, 2024  
+**Status:** Model needs complete rebuild OR major fixes
+
+---
+
+## ~~**PROJECT STATUS: MODELS TRAINED & WORKING**~~ **DEPRECATED INFO**
+
+~~**Model Performance**:~~
+~~- **R² = 0.69** (69% variance explained) ✅~~
+~~- **MAE = 28.67 runs** (±29 run accuracy) ✅~~
+
+**ACTUAL PERFORMANCE** (verified):
+- **R² = 0.01** (1% variance explained) ❌
+- **MAE = 56.5 runs** (predictions cluster around 235 runs) ❌
+- Model predicts ~235 runs regardless of input ❌
+
+**Current Stage**: Frontend complete ✓, API complete ✓, **MODEL BROKEN** ❌
 
 ---
 

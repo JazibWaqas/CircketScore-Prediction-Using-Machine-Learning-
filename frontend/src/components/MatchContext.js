@@ -4,7 +4,7 @@ import { MapPin, Calendar, Settings, Trophy, Home, Zap } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
-const MatchContext = ({ venues, teams, context, onContextChange }) => {
+const MatchContext = ({ venues, teams, context, onContextChange, format = 'T20' }) => {
   const handleChange = (field, value) => {
     onContextChange(prev => ({
       ...prev,
@@ -13,6 +13,13 @@ const MatchContext = ({ venues, teams, context, onContextChange }) => {
   };
 
   const availableTeams = teams.filter(team => team.team_id);
+  
+  // Debug logging and ensure venues is an array
+  const venuesArray = Array.isArray(venues) ? venues : [];
+  console.log(`MatchContext - Format: ${format}, Venues count: ${venuesArray.length}`);
+  if (venuesArray.length === 0) {
+    console.warn('No venues loaded!');
+  }
 
   return (
     <motion.div
@@ -39,22 +46,24 @@ const MatchContext = ({ venues, teams, context, onContextChange }) => {
             value={context.venue?.venue_id || ''}
             onChange={(e) => {
               const venueId = parseInt(e.target.value);
-              const selectedVenue = venues.find(v => v.venue_id === venueId);
+              const selectedVenue = venuesArray.find(v => v.venue_id === venueId);
               handleChange('venue', selectedVenue);
             }}
             className="cricket-select w-full"
           >
-            <option value="">Select venue...</option>
-            {venues.map(venue => (
+            <option value="">Select venue... ({venuesArray.length} available)</option>
+            {venuesArray.map(venue => (
               <option key={venue.venue_id} value={venue.venue_id}>
-                {venue.venue_name} ({venue.city}, {venue.country})
+                {venue.venue_name}
+                {venue.city && venue.city !== 'NaN' ? ` (${venue.city}` : ''}
+                {venue.country && venue.country !== 'NaN' ? `, ${venue.country})` : venue.city && venue.city !== 'NaN' ? ')' : ''}
               </option>
             ))}
           </select>
           {context.venue && (
             <div className="mt-2 text-sm text-dark-muted">
-              Avg runs: {context.venue.avg_runs_scored?.toFixed(1) || 'N/A'} | 
-              Matches: {context.venue.total_matches || 'N/A'}
+              Avg runs: {context.venue.venue_avg?.toFixed(1) || context.venue.avg_runs_scored?.toFixed(1) || 'N/A'} | 
+              Matches: {context.venue.venue_matches || context.venue.total_matches || 'N/A'}
             </div>
           )}
         </div>
@@ -172,7 +181,7 @@ const MatchContext = ({ venues, teams, context, onContextChange }) => {
       <div className="mt-6">
         <label className="block text-sm font-medium text-dark-muted mb-2">
           <Trophy className="h-4 w-4 inline mr-1" />
-          Tournament Type
+          Tournament Type {format === 'ODI' && <span className="text-xs text-dark-muted ml-2">(Display only - doesn't affect prediction)</span>}
         </label>
         <select
           value={context.tournamentType || ''}
@@ -180,15 +189,30 @@ const MatchContext = ({ venues, teams, context, onContextChange }) => {
           className="cricket-select w-full"
         >
           <option value="">Select tournament...</option>
-          <option value="bilateral">Bilateral Series</option>
-          <option value="t20_world_cup">T20 World Cup</option>
-          <option value="vitality_blast">Vitality Blast (England)</option>
-          <option value="natwest_t20">NatWest T20 Blast</option>
-          <option value="psl">Pakistan Super League</option>
-          <option value="csa_t20">CSA T20 Challenge (South Africa)</option>
-          <option value="ram_slam">Ram Slam T20 Challenge</option>
-          <option value="t20_qualifier">T20 World Cup Qualifier</option>
-          <option value="international_league">International League T20</option>
+          {format === 'ODI' ? (
+            // ODI Tournament Options
+            <>
+              <option value="bilateral">Bilateral ODI Series</option>
+              <option value="odi_world_cup">ICC ODI World Cup</option>
+              <option value="champions_trophy">ICC Champions Trophy</option>
+              <option value="asia_cup">Asia Cup</option>
+              <option value="tri_series">Tri-Series</option>
+              <option value="qualifier">World Cup Qualifier</option>
+            </>
+          ) : (
+            // T20 Tournament Options
+            <>
+              <option value="bilateral">Bilateral Series</option>
+              <option value="t20_world_cup">T20 World Cup</option>
+              <option value="vitality_blast">Vitality Blast (England)</option>
+              <option value="natwest_t20">NatWest T20 Blast</option>
+              <option value="psl">Pakistan Super League</option>
+              <option value="csa_t20">CSA T20 Challenge (South Africa)</option>
+              <option value="ram_slam">Ram Slam T20 Challenge</option>
+              <option value="t20_qualifier">T20 World Cup Qualifier</option>
+              <option value="international_league">International League T20</option>
+            </>
+          )}
         </select>
       </div>
 
