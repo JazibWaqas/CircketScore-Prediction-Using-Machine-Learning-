@@ -1,0 +1,96 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Flask
+instance/
+.webassets-cache
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# React Build
+dashboard/frontend/build/
+dashboard/frontend/.env.local
+dashboard/frontend/.env.development.local
+dashboard/frontend/.env.test.local
+dashboard/frontend/.env.production.local
+
+# Machine Learning Models (large files)
+*.pkl
+*.h5
+*.joblib
+*.model
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Large datasets
+*.csv
+raw_data/odis_ballbyBall/*.json
+raw_data/t20 matches ball by ball/*.json
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS
+Thumbs.db
+*.log
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Test coverage
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.old
+

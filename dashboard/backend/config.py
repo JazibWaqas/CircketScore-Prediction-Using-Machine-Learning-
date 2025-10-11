@@ -11,6 +11,12 @@ class Config:
     PORT = 5002
     DEBUG = True
     
-    # CORS
-    CORS_ORIGINS = ['http://localhost:3000', 'http://localhost:3001']
+    # CORS - Allow localhost and ngrok
+    CORS_ORIGINS = [
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'https://*.ngrok.io',
+        'https://*.ngrok-free.app',
+        '*'  # Allow all for ngrok (remove in production)
+    ]
 

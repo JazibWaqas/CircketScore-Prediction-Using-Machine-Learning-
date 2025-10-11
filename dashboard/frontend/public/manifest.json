@@ -1,0 +1,10 @@
+{
+  "short_name": "ODI Predictor",
+  "name": "ODI Progressive Score Predictor",
+  "icons": [],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#00C851",
+  "background_color": "#0F0F0F"
+}
+
