@@ -1,0 +1,24 @@
+ODI SCORE PREDICTION - REAL MATCH VALIDATION
+================================================================================
+
+Model: CLEAN_xgboost.pkl (No data leakage)
+Test period: 2023-02-28 to 2025-09-07
+Total matches: 350
+
+OVERALL PERFORMANCE:
+  MAE: 54.7 runs
+  Within ±30: 242/700 (34.6%)
+
+MAJOR TEAMS (304 matches):
+  MAE: 54.6 runs
+  Within ±30: 33.2%
+
+KEY FINDINGS:
+  ✓ Model works best on average scores (200-250 runs)
+  ✗ Underpredicts high scores (300+) by 50-80 runs
+  ✗ Overpredicts collapses (<150) by 80-110 runs
+  ✓ No systematic bias (error = +0.2 runs)
+
+CONCLUSION:
+  Model provides reasonable baseline estimates but struggles with extremes.
+  Without pitch conditions, R²=0.18 is realistic performance ceiling.
