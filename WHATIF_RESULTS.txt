@@ -1,0 +1,42 @@
+================================================================================
+WHAT-IF SCENARIO TESTING RESULTS
+================================================================================
+
+Baseline Prediction: 311.7 runs
+
+DETAILED RESULTS:
+--------------------------------------------------------------------------------
+Baseline Scenario                          311.7 runs (Diff:   +0.0)
+Weak Batting Team                          323.4 runs (Diff:  +11.6)
+Strong Batting Team                        323.7 runs (Diff:  +12.0)
+Weak Opposition Bowling                    327.5 runs (Diff:  +15.8)
+Strong Opposition Bowling                  291.0 runs (Diff:  -20.7)
+Low Scoring (220)                          305.2 runs (Diff:   -6.5)
+Medium Scoring (280)                       311.7 runs (Diff:   +0.0)
+High Scoring (320)                         315.5 runs (Diff:   +3.8)
+Very High Scoring (350)                    315.5 runs (Diff:   +3.8)
+Collapsing (80/7)                          166.0 runs (Diff: -145.7)
+Dominating (220/1)                         369.2 runs (Diff:  +57.5)
+Weak Current Batsmen                       320.3 runs (Diff:   +8.5)
+Elite Current Batsmen                      310.3 runs (Diff:   -1.4)
+Low Momentum (30 in last 10)               310.6 runs (Diff:   -1.1)
+High Momentum (90 in last 10)              290.5 runs (Diff:  -21.2)
+
+================================================================================
+IMPACT SUMMARY (Sorted by Magnitude):
+================================================================================
+
+1. Match State                 203.2 runs    [HIGH]
+2. Opposition Bowling           36.5 runs    [MEDIUM]
+3. Venue                        10.3 runs    [LOW]
+4. Team Quality                  0.3 runs    [LOW]
+5. Current Batsmen             -10.0 runs    [LOW]
+6. Momentum                    -20.1 runs    [LOW]
+
+
+KEY FINDINGS:
+--------------------------------------------------------------------------------
+- Highest Impact: Match State (203.2 runs)
+- Lowest Impact: Momentum (-20.1 runs)
+- Model is most sensitive to: Match State
+- Model is least sensitive to: Momentum

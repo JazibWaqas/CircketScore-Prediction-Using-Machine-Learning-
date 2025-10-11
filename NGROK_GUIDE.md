@@ -5,6 +5,16 @@ Ngrok creates a secure public URL for your localhost, allowing others to access 
 
 ---
 
+## **🔧 UPDATED: Now Works on Phone!**
+
+**Previously:** Ngrok worked on laptop but showed "make sure website is loaded on server 5002" on phone.
+
+**Fixed!** The frontend now automatically uses your ngrok backend URL. Just run `START_WITH_NGROK.bat` and follow the prompts!
+
+See `NGROK_QUICK_FIX.md` for detailed troubleshooting.
+
+---
+
 ## **Quick Setup (3 Steps)**
 
 ### **Step 1: Sign Up (Optional but Recommended)**

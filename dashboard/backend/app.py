@@ -1,7 +1,8 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import pandas as pd
 import numpy as np
+import os
 from config import Config
 from utils.model_loader import get_model_loader
 from utils.database import get_database
@@ -14,7 +15,7 @@ from utils.predictions import (
     get_match_stage
 )
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='../../dashboard/frontend/build', static_url_path='')
 CORS(app, origins=Config.CORS_ORIGINS)
 
 # Load model and database on startup
@@ -385,6 +386,36 @@ def progressive():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve(path):
+    """Serve React frontend"""
+    # If it's an API route, let Flask handle it normally
+    if path.startswith('api/'):
+        return jsonify({'error': 'Not found'}), 404
+    
+    # Check if the build folder exists
+    build_folder = os.path.join(app.static_folder) if app.static_folder else None
+    
+    if build_folder and os.path.exists(build_folder):
+        # If path exists as a file, serve it
+        if path != "" and os.path.exists(os.path.join(build_folder, path)):
+            return send_from_directory(build_folder, path)
+        # Otherwise serve index.html (for React Router)
+        return send_from_directory(build_folder, 'index.html')
+    else:
+        # If build folder doesn't exist, show instructions
+        return jsonify({
+            'message': 'Frontend not built yet',
+            'instructions': [
+                '1. cd dashboard/frontend',
+                '2. npm run build',
+                '3. Restart this server',
+                'OR access frontend separately at http://localhost:3000'
+            ],
+            'api_working': True
+        })
+
 if __name__ == '__main__':
     print("\n" + "="*60)
     print("ODI Progressive Predictor API")
@@ -398,6 +429,7 @@ if __name__ == '__main__':
     print(f"  - POST /api/predict")
     print(f"  - POST /api/whatif")
     print(f"  - POST /api/progressive")
+    print(f"Frontend: http://localhost:{Config.PORT}")
     print("="*60 + "\n")
     
     app.run(host='0.0.0.0', port=Config.PORT, debug=Config.DEBUG)
