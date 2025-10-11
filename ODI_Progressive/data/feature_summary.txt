@@ -1,0 +1,27 @@
+================================================================================
+PROGRESSIVE ODI DATASET - FULL FEATURES
+================================================================================
+
+Total samples: 12,254
+Training: 11,032 (2,297 matches)
+Testing: 1,222 (256 matches)
+
+Features (15 numeric + 1 categorical):
+   1. current_score
+   2. wickets_fallen
+   3. balls_bowled
+   4. balls_remaining
+   5. runs_last_10_overs
+   6. current_run_rate
+   7. team_batting_avg
+   8. team_elite_batsmen
+   9. team_batting_depth
+  10. opp_bowling_economy
+  11. opp_elite_bowlers
+  12. opp_bowling_depth
+  13. venue_avg_score
+  14. batsman_1_avg
+  15. batsman_2_avg
+  16. venue (categorical)
+
+Target: final_score

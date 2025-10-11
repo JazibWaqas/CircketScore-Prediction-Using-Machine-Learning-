@@ -1,0 +1,57 @@
+================================================================================
+HOW TO START THE ODI PROGRESSIVE DASHBOARD
+================================================================================
+
+STEP 1: Open Terminal/PowerShell #1
+------------------------------------
+cd C:\Users\OMNIBOOK\Documents\GitHub\CircketScore-Prediction-Using-Machine-Learning-\dashboard\backend
+python app.py
+
+WAIT FOR: "Running on http://0.0.0.0:5002"
+KEEP THIS TERMINAL OPEN!
+
+STEP 2: Open NEW Terminal/PowerShell #2
+----------------------------------------
+cd C:\Users\OMNIBOOK\Documents\GitHub\CircketScore-Prediction-Using-Machine-Learning-\dashboard\frontend
+npm start
+
+WAIT FOR: Browser opens at http://localhost:3000
+KEEP THIS TERMINAL OPEN!
+
+STEP 3: Use the Dashboard
+--------------------------
+1. Search and select 11 batting players (any players)
+2. Search and select 11 opposition players (any players)
+3. Choose a venue from dropdown
+4. Set match scenario (use quick buttons OR manual input)
+5. Click "Predict Final Score"
+6. See prediction with confidence level!
+
+================================================================================
+WHAT YOU'LL SEE
+================================================================================
+
+- Predicted Score: Based on your trained model
+- Confidence Level: Low (pre-match) to Very High (death overs)
+- R² Score: Shows accuracy at this stage
+- Team Statistics: Batting avg, elite batsmen, bowling economy
+- Expected Error: ±12 to ±41 runs depending on stage
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+Backend won't start?
+  - Make sure you're in the correct folder
+  - Check if port 5002 is already in use
+
+Frontend won't start?
+  - Make sure you ran: npm install
+  - Check if port 3000 is already in use
+
+Can't select players?
+  - Backend must be running first
+  - Check browser console for errors (F12)
+
+================================================================================
+

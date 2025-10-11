@@ -1,0 +1,124 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .text-cricket-red {
+    color: #ff4444;
+  }
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: linear-gradient(135deg, #0F0F0F 0%, #1A1A1A 100%);
+  color: #E5E5E5;
+  min-height: 100vh;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1A1A1A;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #00C851;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #00A041;
+}
+
+/* Custom components */
+.cricket-card {
+  @apply bg-dark-card border border-dark-border rounded-xl p-6 shadow-lg;
+}
+
+.cricket-button {
+  @apply bg-cricket-green hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg;
+}
+
+.cricket-input {
+  @apply bg-dark-card border border-dark-border text-dark-text placeholder-dark-muted rounded-lg px-4 py-3 focus:border-cricket-green focus:ring-2 focus:ring-cricket-green/20 transition-all duration-300;
+}
+
+.cricket-select {
+  @apply bg-dark-card border border-dark-border text-dark-text rounded-lg px-4 py-3 focus:border-cricket-green focus:ring-2 focus:ring-cricket-green/20 transition-all duration-300;
+}
+
+.team-card {
+  @apply bg-gradient-to-br from-dark-card to-dark-border border border-dark-border rounded-xl p-6 hover:border-cricket-green/50 transition-all duration-300;
+}
+
+.prediction-glow {
+  @apply animate-pulse-glow;
+}
+
+.score-display {
+  @apply text-4xl font-bold text-cricket-green text-center;
+}
+
+.confidence-badge {
+  @apply bg-cricket-gold text-black px-4 py-2 rounded-full font-semibold text-sm;
+}
+
+.loading-spinner {
+  @apply animate-spin rounded-full h-8 w-8 border-b-2 border-cricket-green;
+}
+
+/* Animations */
+@keyframes slideInUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.slide-in-up {
+  animation: slideInUp 0.5s ease-out;
+}
+
+/* Team selection styles */
+.player-slot {
+  @apply bg-dark-card border-2 border-dashed border-dark-border rounded-lg p-4 hover:border-cricket-green/50 transition-all duration-300;
+}
+
+.player-slot.filled {
+  @apply border-cricket-green bg-cricket-green/10;
+}
+
+/* Prediction results */
+.prediction-card {
+  @apply bg-gradient-to-br from-cricket-green/10 to-cricket-gold/10 border border-cricket-green/30 rounded-xl p-8 text-center;
+}
+
+.winner-glow {
+  @apply animate-pulse-glow;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .cricket-card {
+    @apply p-4;
+  }
+  
+  .score-display {
+    @apply text-2xl;
+  }
+}

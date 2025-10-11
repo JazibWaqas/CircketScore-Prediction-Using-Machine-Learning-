@@ -1,0 +1,40 @@
+{
+  "numeric_features": [
+    "current_score",
+    "wickets_fallen",
+    "balls_bowled",
+    "balls_remaining",
+    "runs_last_10_overs",
+    "current_run_rate",
+    "team_batting_avg",
+    "team_elite_batsmen",
+    "team_batting_depth",
+    "opp_bowling_economy",
+    "opp_elite_bowlers",
+    "opp_bowling_depth",
+    "venue_avg_score",
+    "batsman_1_avg",
+    "batsman_2_avg"
+  ],
+  "categorical_features": [
+    "venue"
+  ],
+  "all_features": [
+    "current_score",
+    "wickets_fallen",
+    "balls_bowled",
+    "balls_remaining",
+    "runs_last_10_overs",
+    "current_run_rate",
+    "team_batting_avg",
+    "team_elite_batsmen",
+    "team_batting_depth",
+    "opp_bowling_economy",
+    "opp_elite_bowlers",
+    "opp_bowling_depth",
+    "venue_avg_score",
+    "batsman_1_avg",
+    "batsman_2_avg",
+    "venue"
+  ]
+}
