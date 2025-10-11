@@ -3,7 +3,7 @@ import os
 
 class Database:
     def __init__(self):
-        db_path = os.path.join(os.path.dirname(__file__), '../../../ODI/Database/cricket_prediction_odi.db')
+        db_path = os.path.join(os.path.dirname(__file__), '../../../ODI_Progressive/cricket_prediction_odi.db')
         self.conn = sqlite3.connect(db_path, check_same_thread=False)
         self.conn.row_factory = sqlite3.Row
         print(f"[OK] Connected to database: {db_path}")
