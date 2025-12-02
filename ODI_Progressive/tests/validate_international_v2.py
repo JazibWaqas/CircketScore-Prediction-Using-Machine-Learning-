@@ -294,44 +294,6 @@ if rf_model:
     r2 = r2_score(death_df['actual'], death_df['rf_pred'])
     print(f"Random Forest v2 Death R2: {r2:.4f}")
 
-print(f"\n{'='*80}")
-print("STAGE-BY-STAGE BREAKDOWN")
-print(f"{'='*80}")
-
-stages = [
-    ("Pre-match (ball 1)", 1),
-    ("Early (ball 60)", 60),
-    ("Mid (ball 120)", 120),
-    ("Late (ball 180)", 180),
-    ("Death (ball 240)", 240)
-]
-
-stage_results = {"xgboost_v2": {}, "random_forest_v2": {}}
-
-for stage_name, ball_num in stages:
-    stage_df = df[df['ball'] == ball_num]
-    if len(stage_df) > 0:
-        if xgb_model:
-            xgb_stage_r2 = r2_score(stage_df['actual'], stage_df['xgb_pred'])
-            xgb_stage_mae = mean_absolute_error(stage_df['actual'], stage_df['xgb_pred'])
-            stage_results["xgboost_v2"][stage_name] = {
-                "r2": float(xgb_stage_r2),
-                "mae": float(xgb_stage_mae),
-                "samples": len(stage_df)
-            }
-            print(f"\n{stage_name}:")
-            print(f"  XGBoost: R² = {xgb_stage_r2:.4f}, MAE = {xgb_stage_mae:.2f} ({len(stage_df)} samples)")
-        
-        if rf_model:
-            rf_stage_r2 = r2_score(stage_df['actual'], stage_df['rf_pred'])
-            rf_stage_mae = mean_absolute_error(stage_df['actual'], stage_df['rf_pred'])
-            stage_results["random_forest_v2"][stage_name] = {
-                "r2": float(rf_stage_r2),
-                "mae": float(rf_stage_mae),
-                "samples": len(stage_df)
-            }
-            print(f"  Random Forest: R² = {rf_stage_r2:.4f}, MAE = {rf_stage_mae:.2f} ({len(stage_df)} samples)")
-
 print(f"\n{'='*80}\n")
 
 # Save results to JSON for reliable reading
@@ -339,14 +301,12 @@ output_data = {
     "xgboost_v2": {
         "r2": xgb_r2 if xgb_model else 0,
         "mae": xgb_mae if xgb_model else 0,
-        "death_r2": r2_score(death_df['actual'], death_df['xgb_pred']) if xgb_model else 0,
-        "stages": stage_results["xgboost_v2"]
+        "death_r2": r2_score(death_df['actual'], death_df['xgb_pred']) if xgb_model else 0
     },
     "random_forest_v2": {
         "r2": rf_r2 if rf_model else 0,
         "mae": rf_mae if rf_model else 0,
-        "death_r2": r2_score(death_df['actual'], death_df['rf_pred']) if rf_model else 0,
-        "stages": stage_results["random_forest_v2"]
+        "death_r2": r2_score(death_df['actual'], death_df['rf_pred']) if rf_model else 0
     }
 }
 
