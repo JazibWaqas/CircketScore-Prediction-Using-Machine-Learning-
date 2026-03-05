@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import Header from './components/Header';
 import TeamSelector from './components/TeamSelector';
@@ -45,14 +45,8 @@ function App() {
   // Show players from any country when true (What-if scenario)
   const [whatIfAllPlayers, setWhatIfAllPlayers] = useState(false);
 
-  // Model selection
-  // selectedModel stores the canonical identifier (value), e.g. 'xgboost' or 'random_forest'
-  const [selectedModel, setSelectedModel] = useState('xgboost');
-  // Fallback list of models as {label, value}
-  const [availableModels, setAvailableModels] = useState([
-    { label: 'XGBoost', value: 'xgboost' },
-    { label: 'Random Forest', value: 'random_forest' }
-  ]);
+  const selectedModel = 'xgboost';
+  const predictionRef = useRef(null);
 
   // Load initial data
   useEffect(() => {
@@ -69,38 +63,7 @@ function App() {
         setPlayers(playersRes.data.players);
         setVenues(venuesRes.data.venues);
 
-        // Load models separately (non-critical, has fallback)
-        try {
-          const modelsRes = await api.getModels();
-          if (modelsRes.data.models) {
-            // modelsRes.data.models expected format: [{label, value}, ...] or string list
-            const remoteModels = modelsRes.data.models.map(m => {
-              if (typeof m === 'string') {
-                return { label: m, value: m.toLowerCase().replace(/\s+/g, '_') };
-              }
-              return m;
-            });
-
-            // Merge remote models with client fallback so commonly expected models
-            // like Random Forest are visible even if backend doesn't list them.
-            const fallback = [
-              { label: 'XGBoost', value: 'xgboost' },
-              { label: 'Random Forest', value: 'random_forest' }
-            ];
-
-            // Build map by value to preserve remote ordering but include fallbacks
-            const map = new Map();
-            remoteModels.forEach(m => map.set(m.value, m));
-            fallback.forEach(m => { if (!map.has(m.value)) map.set(m.value, m); });
-
-            const merged = Array.from(map.values());
-            setAvailableModels(merged);
-            setSelectedModel(modelsRes.data.default || (merged[0] && merged[0].value));
-          }
-        } catch (modelErr) {
-          console.warn('Could not load models, using default fallback:', modelErr);
-          // Keep client-side fallback
-        }
+        // Model loading logic removed inline with simplifying to XGBoost only
 
         setLoading(false);
       } catch (err) {
@@ -196,6 +159,9 @@ function App() {
       const response = await api.predict(requestData);
 
       setPrediction(response.data);
+      setTimeout(() => {
+        predictionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
     } catch (err) {
       setError(err.response?.data?.error || 'Prediction failed. Check console for details.');
       console.error('Prediction error:', err);
@@ -233,43 +199,28 @@ function App() {
           </motion.div>
         )}
 
-        <div className="mb-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-          {/* Model Selector */}
-          <div className="flex items-center gap-6">
-            <div>
-              <div className="text-lg font-semibold text-cricket-green">Model</div>
-              <div className="text-xs text-dark-muted">Choose model for prediction</div>
-            </div>
+        {/* Info Banner & Features */}
+        <div className="mb-8 bg-dark-card border border-dark-border rounded-xl p-6 shadow-lg">
+          <h2 className="text-xl font-bold text-cricket-green mb-3">Welcome to ODI Predictor</h2>
+          <p className="text-dark-text mb-4 text-sm leading-relaxed">
+            Choose your custom fantasy team or use real squads to predict upcoming or live International ODI final scores. Our platform runs your scenarios through an advanced machine learning engine trained entirely on international ODI matches.
+          </p>
+          <div className="flex flex-col md:flex-row gap-4 text-sm text-dark-muted items-start md:items-center">
+            <span className="flex items-center gap-2"><span className="flex items-center justify-center w-5 h-5 rounded-full bg-cricket-green/20 text-cricket-green font-bold text-xs">✓</span> Build Fantasy Teams</span>
+            <span className="flex items-center gap-2"><span className="flex items-center justify-center w-5 h-5 rounded-full bg-cricket-green/20 text-cricket-green font-bold text-xs">✓</span> Compare Player Impact</span>
+            <span className="flex items-center gap-2"><span className="flex items-center justify-center w-5 h-5 rounded-full bg-cricket-green/20 text-cricket-green font-bold text-xs">✓</span> Live Match Context</span>
 
-            <div className="flex items-center gap-3">
-              {availableModels.map(m => (
-                <button
-                  key={m.value}
-                  onClick={() => setSelectedModel(m.value)}
-                  className={
-                    `px-4 py-2 border rounded-lg text-sm transition-colors focus:outline-none ` +
-                    (selectedModel === m.value
-                      ? 'bg-cricket-green text-white border-cricket-green'
-                      : 'bg-black text-white border-gray-700 hover:border-cricket-green')
-                  }
-                  aria-pressed={selectedModel === m.value}
-                >
-                  {m.label}
-                </button>
-              ))}
+            <div className="mt-2 md:mt-0 md:ml-auto inline-flex items-center bg-black/30 px-4 py-2 rounded-lg border border-dark-border py-2 text-sm">
+              <input
+                type="checkbox"
+                id="whatif-toggle"
+                checked={whatIfAllPlayers}
+                onChange={(e) => setWhatIfAllPlayers(e.target.checked)}
+                className="h-4 w-4 rounded text-cricket-green border-gray-600 focus:ring-cricket-green/50 bg-dark-card mr-3 cursor-pointer"
+              />
+              <label htmlFor="whatif-toggle" className="cursor-pointer text-white">Enable What-If (All Countries)</label>
             </div>
           </div>
-
-          {/* What-if checkbox */}
-          <label className="inline-flex items-center gap-3 text-sm text-dark-muted">
-            <input
-              type="checkbox"
-              checked={whatIfAllPlayers}
-              onChange={(e) => setWhatIfAllPlayers(e.target.checked)}
-              className="h-4 w-4"
-            />
-            <span>What-if scenario: show players from all countries</span>
-          </label>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
@@ -335,22 +286,33 @@ function App() {
         />
 
         {/* Predict Button */}
-        <div className="text-center my-8">
+        <div className="text-center my-8 flex flex-col items-center">
           <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: (predicting || teamA.players.length < 11 || teamB.players.length < 11) ? 1 : 1.05 }}
+            whileTap={{ scale: (predicting || teamA.players.length < 11 || teamB.players.length < 11) ? 1 : 0.95 }}
             onClick={handlePredict}
-            disabled={predicting}
-            className="cricket-button text-xl px-12 py-4 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={predicting || teamA.players.length < 11 || teamB.players.length < 11}
+            className={`text-xl px-12 py-4 rounded-lg font-bold shadow-lg transition-all duration-300 ${(predicting || teamA.players.length < 11 || teamB.players.length < 11)
+                ? 'bg-gray-800 text-gray-500 cursor-not-allowed border border-gray-700'
+                : 'bg-cricket-green text-white hover:bg-green-600 hover:scale-105'
+              }`}
           >
             {predicting ? 'Predicting...' : '🏏 Predict Final Score'}
           </motion.button>
+
+          {(teamA.players.length < 11 || teamB.players.length < 11) && (
+            <div className="mt-3 text-sm text-yellow-500/80 bg-yellow-900/10 px-4 py-2 rounded-lg border border-yellow-700/30">
+              Select <b>{Math.max(0, 11 - teamA.players.length)}</b> more players for Team A and <b>{Math.max(0, 11 - teamB.players.length)}</b> for Team B to enable.
+            </div>
+          )}
         </div>
 
         {/* Prediction Results */}
-        {prediction && (
-          <PredictionDisplay prediction={prediction} scenario={matchScenario} />
-        )}
+        <div ref={predictionRef}>
+          {prediction && (
+            <PredictionDisplay prediction={prediction} scenario={matchScenario} />
+          )}
+        </div>
       </main>
     </div>
   );

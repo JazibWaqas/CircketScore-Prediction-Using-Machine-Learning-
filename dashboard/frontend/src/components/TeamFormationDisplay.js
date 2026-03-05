@@ -45,9 +45,9 @@ const TeamFormationDisplay = ({ team, teamType, players }) => {
     };
 
     // Strength bars
-    const battingStrength = Math.min(10, Math.round((avgBattingAvg / 50) * 10));
-    const bowlingStrength = avgBowlingEconomy > 0 ? Math.min(10, Math.round((6 - avgBowlingEconomy) * 2)) : 5;
-    const depthStrength = Math.min(10, battingDepth);
+    const battingStrength = Math.max(0, Math.min(10, Math.round((avgBattingAvg / 50) * 10)));
+    const bowlingStrength = avgBowlingEconomy > 0 ? Math.max(0, Math.min(10, Math.round((6 - avgBowlingEconomy) * 2))) : 5;
+    const depthStrength = Math.max(0, Math.min(10, battingDepth));
 
     return (
         <motion.div
@@ -137,7 +137,7 @@ const TeamFormationDisplay = ({ team, teamType, players }) => {
                                 ⚠️ Batting lineup looks thin
                             </div>
                         )}
-                        {bowlers.length >= 5 && batsmen.length >= 5 && (
+                        {bowlers.length + allRounders.length >= 5 && batsmen.length + allRounders.length >= 6 && (
                             <div className="mt-3 p-2 bg-cricket-green/20 border border-cricket-green/50 rounded text-xs text-cricket-green">
                                 ✓ Well-balanced team composition
                             </div>

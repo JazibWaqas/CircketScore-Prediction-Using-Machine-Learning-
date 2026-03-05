@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 
 const Header = () => {
   return (
-    <motion.header 
+    <motion.header
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       className="bg-gradient-to-r from-dark-card to-dark-border border-b-2 border-cricket-green/30 py-6 px-8 shadow-xl"
@@ -21,7 +21,7 @@ const Header = () => {
           </div>
           <div className="text-right">
             <div className="text-cricket-green font-semibold">Progressive Accuracy</div>
-            <div className="text-sm text-dark-muted">Pre-match: 35% → Death: 94%</div>
+            <div className="text-sm text-dark-muted">Pre-match: ±25 runs → Death: ±8 runs</div>
           </div>
         </div>
       </div>
