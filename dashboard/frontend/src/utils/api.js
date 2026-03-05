@@ -8,7 +8,7 @@ const getApiUrl = () => {
     return `${window.location.protocol}//${window.location.host}/api`;
   }
   // For local development, connect to backend on port 5002
-  return 'http://localhost:5002/api';
+  return 'https://cricket-score-predictor-api.onrender.com/api';
 };
 
 const API_BASE_URL = getApiUrl();
