@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, TrendingUp, Target } from 'lucide-react';
+import { MapPin, Target } from 'lucide-react';
 
 const MatchContextDisplay = ({ teamA, teamB, scenario, venues }) => {
     if (!teamA.team_name || !teamB.team_name) {

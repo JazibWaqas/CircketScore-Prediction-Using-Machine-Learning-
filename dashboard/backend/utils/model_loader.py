@@ -21,9 +21,19 @@ class ModelLoader:
             'XGBoost': os.path.join(os.path.dirname(Config.MODEL_PATH), 'progressive_model_xgboost_v2.pkl'),
             'Random Forest': os.path.join(os.path.dirname(Config.MODEL_PATH), 'progressive_model_random_forest_v2.pkl')
         }
+
+        # Keep production memory predictable. Additional models can be enabled
+        # with MODEL_NAMES="XGBoost,Random Forest".
+        enabled_models = {
+            name.strip()
+            for name in os.environ.get('MODEL_NAMES', 'XGBoost').split(',')
+            if name.strip()
+        }
         
         # Load them
         for model_name, model_path in v2_models.items():
+            if model_name not in enabled_models:
+                continue
             try:
                 if os.path.exists(model_path):
                     with open(model_path, 'rb') as f:
@@ -74,7 +84,7 @@ class ModelLoader:
         try:
             import pandas as pd
             # Use full dataset to get better venue averages
-            dataset_path = os.path.join(os.path.dirname(__file__), '../../../ODI_Progressive/data/progressive_full_features_dataset.csv')
+            dataset_path = os.path.join(os.path.dirname(__file__), '../../../ODI_Progressive/data/progressive_full_features_dataset_v2.csv')
             if os.path.exists(dataset_path):
                 df = pd.read_csv(dataset_path)
             else:
@@ -157,4 +167,3 @@ def get_model_loader():
     if _model_loader is None:
         _model_loader = ModelLoader()
     return _model_loader
-

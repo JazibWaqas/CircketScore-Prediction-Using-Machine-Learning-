@@ -48,16 +48,18 @@ def calculate_bowling_aggregates(players, player_db):
         bowling_economies = []
         
         for player_name in players:
+            player_data = player_db.get(player_name) or {}
+            bowling_data = player_data.get('bowling') or {}
+
             # Try to get actual economy
-            if player_name in player_db and 'bowling' in player_db[player_name]:
-                bowling_data = player_db[player_name]['bowling']
+            if bowling_data:
                 economy = bowling_data.get('economy')
                 # Check if economy exists and is valid (not None, not 0)
                 if economy is not None and economy > 0:
                     bowling_economies.append(float(economy))
                 else:
                     # Use role-based default if missing
-                    role = player_db.get(player_name, {}).get('role', 'Batsman')
+                    role = player_data.get('role') or 'Batsman'
                     if 'Bowler' in role:
                         bowling_economies.append(5.0)
                     elif 'All-rounder' in role:
@@ -66,7 +68,7 @@ def calculate_bowling_aggregates(players, player_db):
                         bowling_economies.append(6.0)  # Batsman who bowls occasionally
             else:
                 # Player not in database or no bowling data - use role-based default
-                role = player_db.get(player_name, {}).get('role', 'Batsman')
+                role = player_data.get('role') or 'Batsman'
                 if 'Bowler' in role:
                     bowling_economies.append(5.0)
                 elif 'All-rounder' in role:
@@ -111,16 +113,18 @@ def get_batsman_avg(player_name, player_db):
     - All-rounder: 25
     - Bowler: 18
     """
+    player_data = player_db.get(player_name) or {}
+    batting_data = player_data.get('batting') or {}
+
     # Try to get actual average from database
-    if player_name in player_db and 'batting' in player_db[player_name]:
-        batting_data = player_db[player_name]['batting']
+    if batting_data:
         avg = batting_data.get('average')
         # Check if average exists and is valid (not None, not 0)
         if avg is not None and avg > 0:  # Has actual data
             return float(avg)
     
     # Only if truly missing (None, 0, or not in DB), use role-based default
-    role = player_db.get(player_name, {}).get('role', 'Batsman')
+    role = player_data.get('role') or 'Batsman'
     if 'Bowler' in role:
         return 18.0
     elif 'All-rounder' in role:

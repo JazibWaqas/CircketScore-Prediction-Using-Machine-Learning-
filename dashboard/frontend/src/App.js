@@ -67,7 +67,7 @@ function App() {
 
         setLoading(false);
       } catch (err) {
-        setError('Failed to load data. Make sure backend is running on port 5002');
+        setError('Failed to load prediction data. The API may be starting up; please try again shortly.');
         console.error('Load error:', err);
         setLoading(false);
       }

@@ -1,13 +1,17 @@
 import axios from 'axios';
 
-// Auto-detect API URL - works everywhere automatically!
+// Use an explicit production API when configured by the frontend host.
 const getApiUrl = () => {
-  // If accessing from ngrok or any remote domain, use relative URL (same domain as frontend)
-  if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-    // Use the same host as the frontend - works when frontend is served from backend
-    return `${window.location.protocol}//${window.location.host}/api`;
+  const configuredUrl = process.env.REACT_APP_API_URL;
+  if (configuredUrl) {
+    return configuredUrl.replace(/\/$/, '');
   }
-  // For local development, connect to backend on port 5002
+
+  // Local React development and the deployed portfolio fallback.
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return 'http://localhost:5002/api';
+  }
+
   return 'https://cricket-score-predictor-api.onrender.com/api';
 };
 
@@ -40,4 +44,3 @@ export const api = {
 };
 
 export default api;
-

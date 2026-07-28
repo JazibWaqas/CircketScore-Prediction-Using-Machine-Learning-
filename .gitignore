@@ -47,6 +47,9 @@ dashboard/frontend/.env.production.local
 *.joblib
 *.model
 
+# Production inference artifact (small enough to version and required by Render)
+!ODI_Progressive/models/progressive_model_xgboost_v2.pkl
+
 # Databases
 *.db
 *.sqlite
@@ -54,6 +57,7 @@ dashboard/frontend/.env.production.local
 
 # Large datasets
 *.csv
+!ODI_Progressive/data/progressive_full_features_dataset_v2.csv
 raw_data/odis_ballbyBall/*.json
 raw_data/t20 matches ball by ball/*.json
 
