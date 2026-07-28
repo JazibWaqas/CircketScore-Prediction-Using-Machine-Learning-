@@ -1,13 +1,19 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { AlertCircle, RotateCcw, Sparkles, X } from 'lucide-react';
+
 import Header from './components/Header';
+import Hero from './components/Hero';
 import TeamSelector from './components/TeamSelector';
 import MatchScenario from './components/MatchScenario';
 import PredictionDisplay from './components/PredictionDisplay';
+import ImpactLab from './components/ImpactLab';
+import HowItWorks from './components/HowItWorks';
 import LoadingSpinner from './components/LoadingSpinner';
-import MatchContextDisplay from './components/MatchContextDisplay';
-import TeamFormationDisplay from './components/TeamFormationDisplay';
 import api from './utils/api';
+import { PRESETS, buildBalancedXI, resolveVenue } from './utils/squad';
+
+const EMPTY_TEAM = { team_id: null, team_name: '', players: [] };
 
 function App() {
   const [teams, setTeams] = useState([]);
@@ -18,20 +24,11 @@ function App() {
   const [prediction, setPrediction] = useState(null);
   const [error, setError] = useState(null);
 
-  // Team selection - matches root frontend structure
-  const [teamA, setTeamA] = useState({
-    team_id: null,
-    team_name: '',
-    players: []
-  });
+  const [teamA, setTeamA] = useState(EMPTY_TEAM);
+  const [teamB, setTeamB] = useState(EMPTY_TEAM);
+  const [whatIfAllPlayers, setWhatIfAllPlayers] = useState(false);
+  const [activePreset, setActivePreset] = useState(null);
 
-  const [teamB, setTeamB] = useState({
-    team_id: null,
-    team_name: '',
-    players: []
-  });
-
-  // Match scenario
   const [matchScenario, setMatchScenario] = useState({
     venue: '',
     venue_avg_score: 250,
@@ -40,191 +37,265 @@ function App() {
     overs: '',
     runs_last_10: '',
     batsman_1: '',
-    batsman_2: ''
+    batsman_2: '',
   });
-  // Show players from any country when true (What-if scenario)
-  const [whatIfAllPlayers, setWhatIfAllPlayers] = useState(false);
 
-  const selectedModel = 'xgboost';
-  const predictionRef = useRef(null);
+  const predictorRef = useRef(null);
+  const resultRef = useRef(null);
 
-  // Load initial data
   useEffect(() => {
-    const loadData = async () => {
+    const load = async () => {
       try {
-        // Load essential data first
-        const [teamsRes, playersRes, venuesRes] = await Promise.all([
-          api.getTeams(),
-          api.getPlayers(),
-          api.getVenues()
-        ]);
+        const [t, p, v] = await Promise.all([api.getTeams(), api.getPlayers(), api.getVenues()]);
+        const allTeams = t.data.teams;
+        const allPlayers = p.data.players;
+        const allVenues = v.data.venues;
 
-        setTeams(teamsRes.data.teams);
-        setPlayers(playersRes.data.players);
-        setVenues(venuesRes.data.venues);
+        setTeams(allTeams);
+        setPlayers(allPlayers);
+        setVenues(allVenues);
 
-        // Model loading logic removed inline with simplifying to XGBoost only
-
-        setLoading(false);
+        // Seed a full scenario so the app never renders an empty shell. An empty
+        // two-column form is the worst-looking state and it was the landing state.
+        const seed = PRESETS[1];
+        const find = (n) => allTeams.find((x) => (x.team_name || '').toLowerCase() === n.toLowerCase());
+        const a = find(seed.teamA);
+        const b = find(seed.teamB);
+        if (a && b) {
+          setTeamA({ team_id: a.team_id, team_name: a.team_name, players: buildBalancedXI(allPlayers, a.team_name) });
+          setTeamB({ team_id: b.team_id, team_name: b.team_name, players: buildBalancedXI(allPlayers, b.team_name) });
+          const venue = resolveVenue(allVenues, seed.venuePref);
+          setMatchScenario({
+            venue: venue?.venue_name || '',
+            venue_avg_score: venue?.avg_score || 250,
+            ...seed.scenario,
+            batsman_1: '',
+            batsman_2: '',
+          });
+          setActivePreset(seed.id);
+        }
       } catch (err) {
-        setError('Failed to load prediction data. The API may be starting up; please try again shortly.');
-        console.error('Load error:', err);
+        setError('Could not reach the prediction API. It may still be waking up, so try again in a moment.');
+      } finally {
         setLoading(false);
       }
     };
-
-    loadData();
+    load();
   }, []);
 
-  // Handle team selection
-  const handleTeamSelect = (teamType, teamId, teamName) => {
-    if (teamType === 'A') {
-      setTeamA({ team_id: teamId, team_name: teamName, players: [] });
-    } else {
-      setTeamB({ team_id: teamId, team_name: teamName, players: [] });
-    }
+  const handleTeamSelect = (type, id, name) => {
+    const next = { team_id: id, team_name: name, players: [] };
+    if (type === 'A') setTeamA(next);
+    else setTeamB(next);
+    setPrediction(null);
   };
 
-  // Handle player selection
-  const handlePlayerSelect = (teamType, playerId, playerName, playerCountry) => {
-    const player = { id: playerId, name: playerName, country: playerCountry };
-
-    if (teamType === 'A') {
-      if (teamA.players.length < 11) {
-        setTeamA(prev => ({ ...prev, players: [...prev.players, player] }));
-      }
-    } else {
-      if (teamB.players.length < 11) {
-        setTeamB(prev => ({ ...prev, players: [...prev.players, player] }));
-      }
-    }
+  const handlePlayerSelect = (type, id, name, country) => {
+    const add = (prev) =>
+      prev.players.length < 11 ? { ...prev, players: [...prev.players, { id, name, country }] } : prev;
+    if (type === 'A') setTeamA(add);
+    else setTeamB(add);
   };
 
-  // Handle player removal
-  const handleRemovePlayer = (teamType, playerId) => {
-    if (teamType === 'A') {
-      setTeamA(prev => ({ ...prev, players: prev.players.filter(p => p.id !== playerId) }));
-    } else {
-      setTeamB(prev => ({ ...prev, players: prev.players.filter(p => p.id !== playerId) }));
-    }
+  const handleRemovePlayer = (type, id) => {
+    const drop = (prev) => ({ ...prev, players: prev.players.filter((p) => p.id !== id) });
+    if (type === 'A') setTeamA(drop);
+    else setTeamB(drop);
   };
 
-  // Handle prediction
+  const handleAutoFill = (type, xi) => {
+    if (type === 'A') setTeamA((prev) => ({ ...prev, players: xi }));
+    else setTeamB((prev) => ({ ...prev, players: xi }));
+  };
+
+  /** Build the API payload for an arbitrary batting XI (used by the Impact Lab too). */
+  const buildRequest = useCallback(
+    (battingPlayers) => ({
+      batting_team_players: battingPlayers.map((p) => p.name),
+      bowling_team_players: teamB.players.map((p) => p.name),
+      venue: matchScenario.venue,
+      venue_avg_score: matchScenario.venue_avg_score,
+      current_score: Number(matchScenario.current_score) || 0,
+      wickets_fallen: Number(matchScenario.wickets_fallen) || 0,
+      balls_bowled: (Number(matchScenario.overs) || 0) * 6,
+      runs_last_10_overs: Number(matchScenario.runs_last_10) || 0,
+      batsman_1: matchScenario.batsman_1,
+      batsman_2: matchScenario.batsman_2,
+      model: 'xgboost',
+    }),
+    [teamB.players, matchScenario]
+  );
+
+  const ready = teamA.players.length === 11 && teamB.players.length === 11 && !!matchScenario.venue;
+
   const handlePredict = async () => {
-    console.log('Prediction request - Team A players:', teamA.players.length);
-    console.log('Prediction request - Team B players:', teamB.players.length);
-    console.log('Prediction request - Venue:', matchScenario.venue);
-
-    if (teamA.players.length < 11) {
-      setError('Please select 11 players for Team A (Batting Team)');
-      return;
-    }
-
-    if (teamB.players.length < 11) {
-      setError('Please select 11 players for Team B (Opposition)');
-      return;
-    }
-
-    if (!matchScenario.venue) {
-      setError('Please select a venue');
-      return;
-    }
-
+    if (!ready) return;
     setPredicting(true);
     setError(null);
-
     try {
-      const current_score = Number(matchScenario.current_score) || 0;
-      const wickets_fallen = Number(matchScenario.wickets_fallen) || 0;
-      const oversNumber = Number(matchScenario.overs) || 0;
-      const runs_last_10 = Number(matchScenario.runs_last_10) || 0;
-      const balls_bowled = oversNumber * 6;
-
-      const requestData = {
-        batting_team_players: teamA.players.map(p => p.name),
-        bowling_team_players: teamB.players.map(p => p.name),
-        venue: matchScenario.venue,
-        venue_avg_score: matchScenario.venue_avg_score,
-        current_score: current_score,
-        wickets_fallen: wickets_fallen,
-        balls_bowled: balls_bowled,
-        runs_last_10_overs: runs_last_10,
-        batsman_1: matchScenario.batsman_1,
-        batsman_2: matchScenario.batsman_2,
-        model: selectedModel  // Include selected model
-      };
-
-      console.log('Sending prediction request:', requestData);
-
-      const response = await api.predict(requestData);
-
-      setPrediction(response.data);
-      setTimeout(() => {
-        predictionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 100);
+      const res = await api.predict(buildRequest(teamA.players));
+      setPrediction(res.data);
+      setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 120);
     } catch (err) {
-      setError(err.response?.data?.error || 'Prediction failed. Check console for details.');
-      console.error('Prediction error:', err);
+      setError(err.response?.data?.error || 'Prediction failed. Please try again.');
     } finally {
       setPredicting(false);
     }
   };
 
+  /** One click: fills both XIs, venue and match state from a curated scenario. */
+  const applyPreset = (preset) => {
+    const findTeam = (name) =>
+      teams.find((t) => (t.team_name || '').toLowerCase() === name.toLowerCase());
+
+    const a = findTeam(preset.teamA);
+    const b = findTeam(preset.teamB);
+    if (!a || !b) {
+      setError('Those teams are not available in the current dataset.');
+      return;
+    }
+
+    setTeamA({ team_id: a.team_id, team_name: a.team_name, players: buildBalancedXI(players, a.team_name) });
+    setTeamB({ team_id: b.team_id, team_name: b.team_name, players: buildBalancedXI(players, b.team_name) });
+
+    const venue = resolveVenue(venues, preset.venuePref);
+    setMatchScenario({
+      venue: venue?.venue_name || '',
+      venue_avg_score: venue?.avg_score || 250,
+      ...preset.scenario,
+      batsman_1: '',
+      batsman_2: '',
+    });
+
+    setActivePreset(preset.id);
+    setPrediction(null);
+    setError(null);
+    setTimeout(() => predictorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+  };
+
+  const scrollToPredictor = () => {
+    if (players.length && teams.length) applyPreset(PRESETS[1]);
+    else predictorRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  /** Clear both XIs and the match state so a scenario can be built by hand. */
+  const startFromScratch = () => {
+    setTeamA(EMPTY_TEAM);
+    setTeamB(EMPTY_TEAM);
+    setMatchScenario({
+      venue: '',
+      venue_avg_score: 250,
+      current_score: '',
+      wickets_fallen: '',
+      overs: '',
+      runs_last_10: '',
+      batsman_1: '',
+      batsman_2: '',
+    });
+    setActivePreset(null);
+    setPrediction(null);
+    setError(null);
+    setTimeout(() => predictorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-dark-bg">
+        <Header />
         <LoadingSpinner />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-dark-bg">
+    <div id="top" className="min-h-screen bg-dark-bg">
       <Header />
+      <Hero onTryScenario={scrollToPredictor} />
 
-      <main className="max-w-7xl mx-auto px-6 py-8">
-        {error && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6 bg-red-900/20 border border-red-500/50 rounded-lg p-4 text-red-400"
-          >
-            {error}
+      <main ref={predictorRef} id="predictor" className="mx-auto max-w-6xl px-6 py-8">
+        {/* ---- Presets ---------------------------------------------- */}
+        <div className="mb-4">
+          <div className="mb-2 flex items-center gap-2">
+            <Sparkles className="h-3.5 w-3.5 text-accent" />
+            <span className="eyebrow">Load a live match situation</span>
             <button
-              onClick={() => setError(null)}
-              className="ml-4 text-sm underline"
+              onClick={startFromScratch}
+              className="ml-auto inline-flex items-center gap-1.5 text-[11px] text-dark-muted transition-colors hover:text-dark-text"
             >
-              Dismiss
+              <RotateCcw className="h-3 w-3" />
+              Start from scratch
             </button>
-          </motion.div>
-        )}
-
-        {/* Info Banner & Features */}
-        <div className="mb-8 bg-dark-card border border-dark-border rounded-xl p-6 shadow-lg">
-          <h2 className="text-xl font-bold text-cricket-green mb-3">Welcome to ODI Predictor</h2>
-          <p className="text-dark-text mb-4 text-sm leading-relaxed">
-            Choose your custom fantasy team or use real squads to predict upcoming or live International ODI final scores. Our platform runs your scenarios through an advanced machine learning engine trained entirely on international ODI matches.
-          </p>
-          <div className="flex flex-col md:flex-row gap-4 text-sm text-dark-muted items-start md:items-center">
-            <span className="flex items-center gap-2"><span className="flex items-center justify-center w-5 h-5 rounded-full bg-cricket-green/20 text-cricket-green font-bold text-xs">✓</span> Build Fantasy Teams</span>
-            <span className="flex items-center gap-2"><span className="flex items-center justify-center w-5 h-5 rounded-full bg-cricket-green/20 text-cricket-green font-bold text-xs">✓</span> Compare Player Impact</span>
-            <span className="flex items-center gap-2"><span className="flex items-center justify-center w-5 h-5 rounded-full bg-cricket-green/20 text-cricket-green font-bold text-xs">✓</span> Live Match Context</span>
-
-            <div className="mt-2 md:mt-0 md:ml-auto inline-flex items-center bg-black/30 px-4 py-2 rounded-lg border border-dark-border py-2 text-sm">
-              <input
-                type="checkbox"
-                id="whatif-toggle"
-                checked={whatIfAllPlayers}
-                onChange={(e) => setWhatIfAllPlayers(e.target.checked)}
-                className="h-4 w-4 rounded text-cricket-green border-gray-600 focus:ring-cricket-green/50 bg-dark-card mr-3 cursor-pointer"
-              />
-              <label htmlFor="whatif-toggle" className="cursor-pointer text-white">Enable What-If (All Countries)</label>
-            </div>
+          </div>
+          <div className="grid gap-2.5 sm:grid-cols-3">
+            {PRESETS.map((p) => {
+              const active = activePreset === p.id;
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => applyPreset(p)}
+                  aria-pressed={active}
+                  className={`surface group px-3.5 py-2.5 text-left transition-colors ${
+                    active ? '!border-accent/50 bg-accent/[0.06]' : 'hover:border-ink-500'
+                  }`}
+                >
+                  <span
+                    className={`block text-[13px] font-semibold ${
+                      active ? 'text-accent' : 'text-white group-hover:text-accent'
+                    }`}
+                  >
+                    {p.label}
+                  </span>
+                  <span className="mt-0.5 block text-[11px] text-dark-muted">{p.sub}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Team A - Batting Team */}
+        {/* ---- Error ------------------------------------------------- */}
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              role="alert"
+              className="mb-4 flex items-start gap-3 rounded-xl border border-cricket-red/30 bg-cricket-red/8 px-4 py-3"
+            >
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-cricket-red" />
+              <p className="flex-1 text-sm text-dark-text">{error}</p>
+              <button onClick={() => setError(null)} aria-label="Dismiss" className="text-dark-muted hover:text-white">
+                <X className="h-4 w-4" />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ---- Scenario in, projection out — kept adjacent so changing an
+                input never scrolls the answer off screen. ---------------- */}
+        <MatchScenario
+          scenario={matchScenario}
+          onChange={(s) => { setMatchScenario(s); setPrediction(null); setActivePreset(null); }}
+          venues={venues}
+          battingPlayers={teamA.players}
+          onPredict={handlePredict}
+          predicting={predicting}
+          ready={ready}
+          teamA={teamA}
+          teamB={teamB}
+          whatIfAllPlayers={whatIfAllPlayers}
+          onToggleWhatIf={setWhatIfAllPlayers}
+        />
+
+        <div ref={resultRef} className="mt-4">
+          <PredictionDisplay
+            prediction={prediction}
+            scenario={matchScenario}
+            predicting={predicting}
+          />
+        </div>
+
+        <div className="mt-4 grid items-start gap-4 lg:grid-cols-2">
           <TeamSelector
             teamType="A"
             team={teamA}
@@ -234,9 +305,9 @@ function App() {
             onTeamSelect={handleTeamSelect}
             onPlayerSelect={handlePlayerSelect}
             onRemovePlayer={handleRemovePlayer}
+            onAutoFill={handleAutoFill}
           />
 
-          {/* Team B - Opposition */}
           <TeamSelector
             teamType="B"
             team={teamB}
@@ -246,74 +317,16 @@ function App() {
             onTeamSelect={handleTeamSelect}
             onPlayerSelect={handlePlayerSelect}
             onRemovePlayer={handleRemovePlayer}
+            onAutoFill={handleAutoFill}
           />
         </div>
 
-        {/* Team Formation Displays */}
-        {(teamA.players.length > 0 || teamB.players.length > 0) && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            {teamA.players.length > 0 && (
-              <TeamFormationDisplay
-                team={teamA}
-                teamType="A"
-                players={players}
-              />
-            )}
-            {teamB.players.length > 0 && (
-              <TeamFormationDisplay
-                team={teamB}
-                teamType="B"
-                players={players}
-              />
-            )}
-          </div>
-        )}
-
-        {/* Match Scenario */}
-        <MatchScenario
-          scenario={matchScenario}
-          onChange={setMatchScenario}
-          venues={venues}
-          battingPlayers={teamA.players}
-        />
-
-        {/* Match Context Display */}
-        <MatchContextDisplay
-          teamA={teamA}
-          teamB={teamB}
-          scenario={matchScenario}
-          venues={venues}
-        />
-
-        {/* Predict Button */}
-        <div className="text-center my-8 flex flex-col items-center">
-          <motion.button
-            whileHover={{ scale: (predicting || teamA.players.length < 11 || teamB.players.length < 11) ? 1 : 1.05 }}
-            whileTap={{ scale: (predicting || teamA.players.length < 11 || teamB.players.length < 11) ? 1 : 0.95 }}
-            onClick={handlePredict}
-            disabled={predicting || teamA.players.length < 11 || teamB.players.length < 11}
-            className={`text-xl px-12 py-4 rounded-lg font-bold shadow-lg transition-all duration-300 ${(predicting || teamA.players.length < 11 || teamB.players.length < 11)
-                ? 'bg-gray-800 text-gray-500 cursor-not-allowed border border-gray-700'
-                : 'bg-cricket-green text-white hover:bg-green-600 hover:scale-105'
-              }`}
-          >
-            {predicting ? 'Predicting...' : '🏏 Predict Final Score'}
-          </motion.button>
-
-          {(teamA.players.length < 11 || teamB.players.length < 11) && (
-            <div className="mt-3 text-sm text-yellow-500/80 bg-yellow-900/10 px-4 py-2 rounded-lg border border-yellow-700/30">
-              Select <b>{Math.max(0, 11 - teamA.players.length)}</b> more players for Team A and <b>{Math.max(0, 11 - teamB.players.length)}</b> for Team B to enable.
-            </div>
-          )}
-        </div>
-
-        {/* Prediction Results */}
-        <div ref={predictionRef}>
-          {prediction && (
-            <PredictionDisplay prediction={prediction} scenario={matchScenario} />
-          )}
+        <div className="mt-4">
+          <ImpactLab teamA={teamA} players={players} />
         </div>
       </main>
+
+      <HowItWorks />
     </div>
   );
 }

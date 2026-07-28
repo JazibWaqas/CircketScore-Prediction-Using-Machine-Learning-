@@ -1,6 +1,10 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Plus, X, Search } from 'lucide-react';
+import { Plus, X, Search, Wand2 } from 'lucide-react';
+import { roleStyle } from './ui/Primitives';
+import { sortByRelevance, isEstablished, buildBalancedXI, squadComposition } from '../utils/squad';
+
+const ROLES = ['All', 'Batsman', 'All-rounder', 'Bowler'];
 
 const TeamSelector = ({
   teamType,
@@ -10,260 +14,271 @@ const TeamSelector = ({
   whatIfAllPlayers = false,
   onTeamSelect,
   onPlayerSelect,
-  onRemovePlayer
+  onRemovePlayer,
+  onAutoFill,
 }) => {
-  const [showPlayerDropdown, setShowPlayerDropdown] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedRole, setSelectedRole] = useState('All');
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const [role, setRole] = useState('All');
+  const [showFringe, setShowFringe] = useState(false);
+
+  const isBatting = teamType === 'A';
+  const accentText = isBatting ? 'text-accent' : 'text-oppo';
+  const accentBg = isBatting ? 'bg-accent' : 'bg-oppo';
+  const accentSoft = isBatting ? 'bg-accent/10 border-accent/25' : 'bg-oppo/10 border-oppo/25';
+
+  const comp = useMemo(() => squadComposition(team.players, players), [team.players, players]);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const chosen = new Set(team.players.map((p) => p.id));
+
+    let pool = players.filter((p) => {
+      if (chosen.has(p.player_id)) return false;
+      if (role !== 'All' && (p.player_role || 'All-rounder') !== role) return false;
+      if (team.team_name && !whatIfAllPlayers) {
+        if ((p.country || '').toLowerCase() !== team.team_name.toLowerCase()) return false;
+      }
+      if (!q) return true;
+      return (
+        (p.player_name || '').toLowerCase().includes(q) ||
+        (p.country || '').toLowerCase().includes(q)
+      );
+    });
+
+    // Hide one-cap players by default — they're what made the list look broken.
+    if (!showFringe && !q) {
+      const established = pool.filter(isEstablished);
+      if (established.length >= 12) pool = established;
+    }
+
+    return sortByRelevance(pool);
+  }, [players, team.players, team.team_name, query, role, whatIfAllPlayers, showFringe]);
 
   const handleTeamChange = (e) => {
-    const teamId = parseInt(e.target.value);
-    const selectedTeam = teams.find(t => t.team_id === teamId);
-    if (selectedTeam) {
-      onTeamSelect(teamType, teamId, selectedTeam.team_name);
-    }
+    const id = parseInt(e.target.value, 10);
+    const t = teams.find((x) => x.team_id === id);
+    if (t) onTeamSelect(teamType, id, t.team_name);
   };
 
-  const handlePlayerAdd = (player) => {
-    if (team.players.length < 11) {
-      onPlayerSelect(teamType, player.player_id, player.player_name, player.country);
-      setSearchQuery('');
-    }
+  const autoFill = () => {
+    const xi = buildBalancedXI(players, team.team_name);
+    if (xi.length) onAutoFill(teamType, xi);
   };
 
-  // Role icon helper
-  const getRoleIcon = (role) => {
-    switch (role) {
-      case 'Batsman': return '🏏';
-      case 'Bowler': return '🎳';
-      case 'All-rounder': return '⚖️';
-      default: return '👤';
-    }
-  };
-
-  const getRoleBadgeColor = (role) => {
-    switch (role) {
-      case 'Batsman': return 'bg-blue-500/20 text-blue-400 border-blue-500/50';
-      case 'Bowler': return 'bg-red-500/20 text-red-400 border-red-500/50';
-      case 'All-rounder': return 'bg-purple-500/20 text-purple-400 border-purple-500/50';
-      default: return 'bg-gray-500/20 text-gray-400 border-gray-500/50';
-    }
-  };
-
-  const filteredPlayers = players.filter(player => {
-    const query = searchQuery.toLowerCase();
-    const name = (player.player_name || '').toLowerCase();
-    const country = (player.country || '').toLowerCase();
-    const role = player.player_role || 'All-rounder';
-
-    // Not already selected
-    const notSelected = !team.players.some(p => p.id === player.player_id);
-
-    // Role filter
-    const matchesRole = selectedRole === 'All' || role === selectedRole;
-
-    // If a team/country is selected and we're NOT in a what-if-all-players mode,
-    // only include players whose `country` matches the selected team name.
-    if (team.team_name && !whatIfAllPlayers) {
-      const matchesCountry = country === (team.team_name || '').toLowerCase();
-      return (name.includes(query) || country.includes(query)) && notSelected && matchesCountry && matchesRole;
-    }
-
-    return (name.includes(query) || country.includes(query)) && notSelected && matchesRole;
-  });
-
-  const roleOptions = ['All', 'Batsman', 'All-rounder', 'Bowler'];
+  const full = team.players.length === 11;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: teamType === 'A' ? -20 : 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.5 }}
-      className="team-card"
+    <motion.section
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="surface flex flex-col p-4"
     >
-      <div className="flex items-center mb-4">
-        <Users className="h-6 w-6 text-cricket-green mr-2" />
-        <h3 className="text-xl font-semibold text-cricket-green">
-          Team {teamType} {teamType === 'A' ? '(Batting)' : '(Opposition)'}
-        </h3>
+      {/* Header */}
+      <div className="mb-3 flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <span className={`h-2 w-2 rounded-full ${accentBg}`} />
+          <h2 className="section-title">{isBatting ? 'Batting XI' : 'Bowling XI'}</h2>
+        </div>
+        <span className={`stat-num text-xs ${full ? accentText : 'text-dark-muted'}`}>
+          {team.players.length}/11
+        </span>
       </div>
 
-      {/* Team Selection */}
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-dark-muted mb-2">
-          Select Team/Country
-        </label>
-        <select
-          value={team.team_id || ''}
-          onChange={handleTeamChange}
-          className="cricket-select w-full"
-        >
-          <option value="">Choose a team...</option>
-          {teams.map(teamOption => (
-            <option key={teamOption.team_id} value={teamOption.team_id}>
-              {teamOption.team_name}
-            </option>
-          ))}
-        </select>
-      </div>
+      {/* Country */}
+      <select
+        value={team.team_id || ''}
+        onChange={handleTeamChange}
+        className="cricket-select mb-2.5"
+        aria-label={`${isBatting ? 'Batting' : 'Bowling'} team country`}
+      >
+        <option value="">Choose a country…</option>
+        {teams.map((t) => (
+          <option key={t.team_id} value={t.team_id}>{t.team_name}</option>
+        ))}
+      </select>
 
-      {/* Team Name Display */}
-      {team.team_name && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-4 p-3 bg-cricket-green/10 border border-cricket-green/30 rounded-lg"
-        >
-          <div className="text-cricket-green font-semibold">{team.team_name}</div>
-          <div className="text-sm text-dark-muted">
-            {team.players.length}/11 players selected
-          </div>
-        </motion.div>
+      {!team.team_name && (
+        <p className="px-1 py-6 text-center text-xs leading-relaxed text-dark-muted">
+          Choose a country to pick this {isBatting ? 'batting' : 'bowling'} XI,
+          <br />
+          or turn on Dream-XI mode to select from anyone.
+        </p>
       )}
 
-      {/* Player Selection */}
       {team.team_name && (
-        <div className="mb-4">
-          <div className="flex items-center justify-between mb-3">
-            <label className="text-sm font-medium text-dark-muted">
-              Players ({team.players.length}/11)
-            </label>
-            {team.players.length < 11 && (
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowPlayerDropdown(!showPlayerDropdown)}
-                className="flex items-center gap-2 text-cricket-green hover:text-green-400 transition-colors"
-              >
-                <Plus className="h-4 w-4" />
-                Add Player
-              </motion.button>
+        <>
+          {/* Composition summary — replaces the old "Bowlers: 0" warning card. */}
+          <div className={`mb-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-lg border px-3 py-2 ${accentSoft}`}>
+            <span className="text-sm font-semibold text-white">{team.team_name}</span>
+            <div className="flex items-center gap-3 text-[11px] text-dark-muted">
+              <span><b className="stat-num text-dark-text">{comp.batsmen}</b> bat</span>
+              <span><b className="stat-num text-dark-text">{comp.allRounders}</b> all</span>
+              <span><b className="stat-num text-dark-text">{comp.bowlers}</b> bowl</span>
+            </div>
+            {team.players.length > 0 && (
+              <span className="ml-auto text-[11px] text-dark-muted">
+                {isBatting
+                  ? <>avg <b className="stat-num text-dark-text">{comp.avgBatting.toFixed(1)}</b></>
+                  : <>econ <b className="stat-num text-dark-text">{comp.avgEconomy.toFixed(2)}</b></>}
+              </span>
             )}
           </div>
 
-          {/* Player Dropdown */}
-          <AnimatePresence>
-            {showPlayerDropdown && (
+          {/* Actions */}
+          <div className="mb-2.5 flex items-center gap-2">
+            <button onClick={autoFill} className="btn-ghost !py-1.5 !px-3 text-xs">
+              <Wand2 className="h-3.5 w-3.5" />
+              Auto-pick XI
+            </button>
+            {!full && (
+              <button
+                onClick={() => setOpen((v) => !v)}
+                className="btn-ghost !py-1.5 !px-3 text-xs"
+                aria-expanded={open}
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Add player
+              </button>
+            )}
+          </div>
+
+          {/* Picker */}
+          <AnimatePresence initial={false}>
+            {open && !full && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className="mb-4"
+                className="mb-4 overflow-hidden"
               >
-                <div className="relative">
-                  {/* Role Filter Tabs */}
-                  <div className="flex gap-2 mb-3 flex-wrap">
-                    {roleOptions.map(role => (
+                <div className="surface-inset p-3">
+                  <div className="relative mb-2.5">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-dark-muted" />
+                    <input
+                      type="text"
+                      placeholder="Search players…"
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      className="cricket-input !pl-9"
+                    />
+                  </div>
+
+                  <div className="mb-2.5 flex flex-wrap gap-1.5">
+                    {ROLES.map((r) => (
                       <button
-                        key={role}
-                        onClick={() => setSelectedRole(role)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${selectedRole === role
-                            ? 'bg-cricket-green text-white'
-                            : 'bg-dark-card text-dark-muted hover:bg-dark-border'
-                          }`}
+                        key={r}
+                        onClick={() => setRole(r)}
+                        className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                          role === r
+                            ? `${accentBg} text-ink-950`
+                            : 'bg-ink-800 text-dark-muted hover:text-dark-text'
+                        }`}
                       >
-                        {getRoleIcon(role)} {role}
+                        {r}
                       </button>
                     ))}
                   </div>
 
-                  <div className="flex items-center gap-2 mb-2">
-                    <Search className="h-4 w-4 text-dark-muted" />
-                    <input
-                      type="text"
-                      placeholder="Search by name or country..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="cricket-input flex-1 text-sm"
-                    />
-                  </div>
-
-                  <div className="mb-2 text-sm text-dark-muted">
-                    Showing {Math.min(50, filteredPlayers.length)} of {filteredPlayers.length} players
-                  </div>
-
-                  <div className="max-h-64 overflow-y-auto border border-dark-border rounded-lg bg-dark-card">
-                    {filteredPlayers.slice(0, 50).map(player => (
-                      <motion.button
-                        key={player.player_id}
-                        whileHover={{ backgroundColor: '#00C85120' }}
-                        onClick={() => handlePlayerAdd(player)}
-                        className="w-full text-left p-3 hover:bg-cricket-green/10 border-b border-dark-border last:border-b-0 transition-colors"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <span className="text-lg">{getRoleIcon(player.player_role)}</span>
-                              <div className="font-medium text-dark-text">
-                                {player.player_name}
-                              </div>
-                              <span className={`text-xs px-2 py-0.5 rounded border ${getRoleBadgeColor(player.player_role)}`}>
-                                {player.player_role}
-                              </span>
-                            </div>
-                            <div className="text-xs text-dark-muted flex items-center gap-2 mt-1">
-                              <span>{player.country}</span>
-                              {player.batting_avg > 0 && (
-                                <span>• Avg: {player.batting_avg.toFixed(1)}</span>
-                              )}
-                              {player.bowling_economy > 0 && (
-                                <span>• Econ: {player.bowling_economy.toFixed(1)}</span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </motion.button>
-                    ))}
-                    {filteredPlayers.length === 0 && (
-                      <div className="p-6 text-center text-dark-muted">
-                        No players found. Try adjusting your search or role filter.
-                      </div>
+                  <div className="max-h-72 overflow-y-auto rounded-lg border border-dark-border">
+                    {filtered.slice(0, 60).map((p) => {
+                      const rs = roleStyle(p.player_role);
+                      return (
+                        <button
+                          key={p.player_id}
+                          onClick={() => {
+                            onPlayerSelect(teamType, p.player_id, p.player_name, p.country);
+                            setQuery('');
+                          }}
+                          className="flex w-full items-center gap-3 border-b border-dark-border/70 px-3 py-2.5 text-left transition-colors last:border-0 hover:bg-ink-800"
+                        >
+                          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${rs.dot}`} />
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm font-medium text-dark-text">
+                              {p.player_name}
+                            </span>
+                            <span className="mt-0.5 block truncate text-[11px] text-dark-muted">
+                              {p.country}
+                              {p.batting_avg > 0 && <> · <span className="stat-num">{p.batting_avg.toFixed(1)}</span> avg</>}
+                              {p.bowling_economy > 0 && <> · <span className="stat-num">{p.bowling_economy.toFixed(1)}</span> econ</>}
+                              {p.total_matches > 0 && <> · <span className="stat-num">{p.total_matches}</span> mat</>}
+                            </span>
+                          </span>
+                          <span className={`shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-semibold ${rs.badge}`}>
+                            {rs.short}
+                          </span>
+                        </button>
+                      );
+                    })}
+                    {filtered.length === 0 && (
+                      <p className="px-3 py-6 text-center text-xs text-dark-muted">
+                        No players match. Try a different filter.
+                      </p>
                     )}
                   </div>
+
+                  <label className="mt-2.5 flex cursor-pointer items-center gap-2 text-[11px] text-dark-muted">
+                    <input
+                      type="checkbox"
+                      checked={showFringe}
+                      onChange={(e) => setShowFringe(e.target.checked)}
+                      className="h-3 w-3 rounded border-ink-500 bg-ink-950"
+                    />
+                    Include players with fewer than 20 caps
+                  </label>
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* Selected Players */}
-          <div className="space-y-2">
-            <AnimatePresence>
-              {team.players.map((player, index) => (
-                <motion.div
-                  key={player.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  className="flex items-center justify-between p-3 bg-dark-card border border-dark-border rounded-lg"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-cricket-green/20 rounded-full flex items-center justify-center text-sm font-semibold text-cricket-green">
-                      {index + 1}
-                    </div>
-                    <div>
-                      <div className="font-medium text-dark-text">
-                        {player.name}
-                      </div>
-                      <div className="text-sm text-dark-muted">
-                        {player.country}
-                      </div>
-                    </div>
-                  </div>
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => onRemovePlayer(teamType, player.id)}
-                    className="text-cricket-red hover:text-red-400 transition-colors"
+          {/* Selected XI */}
+          <ol className="space-y-1">
+            <AnimatePresence initial={false}>
+              {team.players.map((p, i) => {
+                const meta = players.find((x) => x.player_id === p.id);
+                const rs = roleStyle(meta?.player_role);
+                return (
+                  <motion.li
+                    key={p.id}
+                    layout
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 8 }}
+                    transition={{ duration: 0.18 }}
+                    className="group flex items-center gap-2.5 rounded-md px-2 py-1 hover:bg-ink-850"
                   >
-                    <X className="h-4 w-4" />
-                  </motion.button>
-                </motion.div>
-              ))}
+                    <span className="stat-num w-4 shrink-0 text-right text-[11px] text-dark-muted">
+                      {i + 1}
+                    </span>
+                    <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${rs.dot}`} />
+                    <span className="min-w-0 flex-1 truncate text-sm text-dark-text">{p.name}</span>
+                    {meta?.batting_avg > 0 && (
+                      <span className="stat-num shrink-0 text-[11px] text-dark-muted">
+                        {meta.batting_avg.toFixed(1)}
+                      </span>
+                    )}
+                    <button
+                      onClick={() => onRemovePlayer(teamType, p.id)}
+                      aria-label={`Remove ${p.name}`}
+                      className="shrink-0 text-dark-muted opacity-0 transition-opacity hover:text-cricket-red focus:opacity-100 group-hover:opacity-100"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </motion.li>
+                );
+              })}
             </AnimatePresence>
-          </div>
-        </div>
+          </ol>
+
+          {team.players.length === 0 && (
+            <p className="py-6 text-center text-xs text-dark-muted">
+              No players yet. Use <b className="text-dark-text">Auto-pick XI</b> to load a realistic squad.
+            </p>
+          )}
+        </>
       )}
-    </motion.div>
+    </motion.section>
   );
 };
 
