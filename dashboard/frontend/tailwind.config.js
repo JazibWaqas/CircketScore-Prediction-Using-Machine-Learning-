@@ -59,6 +59,8 @@ module.exports = {
         'slide-up': 'slide-up 0.35s cubic-bezier(.16,1,.3,1)',
         'fade-in': 'fade-in 0.4s ease-out',
         'shimmer': 'shimmer 1.6s linear infinite',
+        // Indeterminate progress for requests of unknown length (cold starts).
+        'sweep': 'sweep 1.4s ease-in-out infinite',
       },
       keyframes: {
         'slide-up': {
@@ -72,6 +74,10 @@ module.exports = {
         'shimmer': {
           '0%': { backgroundPosition: '-800px 0' },
           '100%': { backgroundPosition: '800px 0' },
+        },
+        'sweep': {
+          '0%': { transform: 'translateX(-110%)' },
+          '100%': { transform: 'translateX(320%)' },
         },
       },
     },

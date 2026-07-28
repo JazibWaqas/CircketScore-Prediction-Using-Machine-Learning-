@@ -17,30 +17,35 @@ const getApiUrl = () => {
 
 const API_BASE_URL = getApiUrl();
 
+// Free-tier hosting sleeps between visits, so a cold request can take a while.
+// The ceiling is generous on purpose: timing out early would surface an error
+// for a request that was about to succeed.
+const client = axios.create({ baseURL: API_BASE_URL, timeout: 90000 });
+
 export const api = {
-  // Health check
-  health: () => axios.get(`${API_BASE_URL}/health`),
+  // Health check, also used on mount to spin the container up.
+  health: () => client.get('/health'),
   
   // Get teams
-  getTeams: () => axios.get(`${API_BASE_URL}/teams`),
-  
+  getTeams: () => client.get('/teams'),
+
   // Get all players
-  getPlayers: () => axios.get(`${API_BASE_URL}/players`),
-  
+  getPlayers: () => client.get('/players'),
+
   // Get venues
-  getVenues: () => axios.get(`${API_BASE_URL}/venues`),
-  
+  getVenues: () => client.get('/venues'),
+
   // Get available models
-  getModels: () => axios.get(`${API_BASE_URL}/models`),
-  
+  getModels: () => client.get('/models'),
+
   // Make prediction
-  predict: (data) => axios.post(`${API_BASE_URL}/predict`, data),
-  
+  predict: (data) => client.post('/predict', data),
+
   // What-if analysis
-  whatif: (data) => axios.post(`${API_BASE_URL}/whatif`, data),
-  
+  whatif: (data) => client.post('/whatif', data),
+
   // Progressive predictions
-  progressive: (data) => axios.post(`${API_BASE_URL}/progressive`, data)
+  progressive: (data) => client.post('/progressive', data)
 };
 
 export default api;

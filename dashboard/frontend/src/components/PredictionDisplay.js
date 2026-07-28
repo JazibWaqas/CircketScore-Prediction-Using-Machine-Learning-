@@ -53,6 +53,12 @@ const PredictionDisplay = ({ prediction, scenario, predicting }) => {
               ? 'Hit Predict score to project the final total.'
               : 'Pick both squads and a venue below, then enter the score, wickets and overs to get a projection.'}
         </p>
+
+        {predicting && (
+          <div className="mt-4 h-0.5 w-40 overflow-hidden rounded-full bg-ink-800">
+            <div className="h-full w-1/3 animate-sweep rounded-full bg-accent/70" />
+          </div>
+        )}
       </section>
     );
   }

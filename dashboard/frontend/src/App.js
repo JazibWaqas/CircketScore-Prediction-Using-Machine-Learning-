@@ -9,78 +9,93 @@ import MatchScenario from './components/MatchScenario';
 import PredictionDisplay from './components/PredictionDisplay';
 import ImpactLab from './components/ImpactLab';
 import HowItWorks from './components/HowItWorks';
-import LoadingSpinner from './components/LoadingSpinner';
 import api from './utils/api';
+import snapshot from './data/snapshot.json';
+import presetPredictions from './data/presetPredictions.json';
 import { PRESETS, buildBalancedXI, resolveVenue } from './utils/squad';
 
 const EMPTY_TEAM = { team_id: null, team_name: '', players: [] };
 
+/**
+ * The reference data is bundled with the build, so the page renders complete on
+ * first paint even while the API container is still waking from sleep. The live
+ * API is only required for the prediction call itself.
+ */
+const seedScenario = () => {
+  const preset = PRESETS[1];
+  const a = snapshot.teams.find((t) => t.team_name === preset.teamA);
+  const b = snapshot.teams.find((t) => t.team_name === preset.teamB);
+  const venue = resolveVenue(snapshot.venues, preset.venuePref);
+  return {
+    teamA: a
+      ? { team_id: a.team_id, team_name: a.team_name, players: buildBalancedXI(snapshot.players, a.team_name) }
+      : EMPTY_TEAM,
+    teamB: b
+      ? { team_id: b.team_id, team_name: b.team_name, players: buildBalancedXI(snapshot.players, b.team_name) }
+      : EMPTY_TEAM,
+    scenario: {
+      venue: venue?.venue_name || '',
+      venue_avg_score: venue?.avg_score || 250,
+      ...preset.scenario,
+      batsman_1: '',
+      batsman_2: '',
+    },
+    presetId: preset.id,
+  };
+};
+
+const SEED = seedScenario();
+
 function App() {
-  const [teams, setTeams] = useState([]);
-  const [players, setPlayers] = useState([]);
-  const [venues, setVenues] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [teams, setTeams] = useState(snapshot.teams);
+  const [players, setPlayers] = useState(snapshot.players);
+  const [venues, setVenues] = useState(snapshot.venues);
   const [predicting, setPredicting] = useState(false);
-  const [prediction, setPrediction] = useState(null);
+  // Preset results are precomputed at build time, so the landing scenario shows
+  // a real projection immediately instead of waiting on a cold container.
+  const [prediction, setPrediction] = useState(presetPredictions[SEED.presetId] || null);
   const [error, setError] = useState(null);
 
-  const [teamA, setTeamA] = useState(EMPTY_TEAM);
-  const [teamB, setTeamB] = useState(EMPTY_TEAM);
+  const [teamA, setTeamA] = useState(SEED.teamA);
+  const [teamB, setTeamB] = useState(SEED.teamB);
   const [whatIfAllPlayers, setWhatIfAllPlayers] = useState(false);
-  const [activePreset, setActivePreset] = useState(null);
+  const [activePreset, setActivePreset] = useState(SEED.presetId);
 
-  const [matchScenario, setMatchScenario] = useState({
-    venue: '',
-    venue_avg_score: 250,
-    current_score: '',
-    wickets_fallen: '',
-    overs: '',
-    runs_last_10: '',
-    batsman_1: '',
-    batsman_2: '',
-  });
+  const [matchScenario, setMatchScenario] = useState(SEED.scenario);
 
   const predictorRef = useRef(null);
   const resultRef = useRef(null);
 
+  // Wake the API immediately and refresh the reference data in the background.
+  // Nothing here blocks the first paint; the page is already interactive.
   useEffect(() => {
-    const load = async () => {
+    let cancelled = false;
+
+    const warm = async () => {
+      // Free-tier containers sleep, so the first request pays the spin-up cost.
+      // Firing it on mount means the wait overlaps with the visitor reading.
+      try {
+        await api.health();
+      } catch {
+        /* the retry below covers a failed wake-up */
+      }
+      if (cancelled) return;
+
       try {
         const [t, p, v] = await Promise.all([api.getTeams(), api.getPlayers(), api.getVenues()]);
-        const allTeams = t.data.teams;
-        const allPlayers = p.data.players;
-        const allVenues = v.data.venues;
-
-        setTeams(allTeams);
-        setPlayers(allPlayers);
-        setVenues(allVenues);
-
-        // Seed a full scenario so the app never renders an empty shell. An empty
-        // two-column form is the worst-looking state and it was the landing state.
-        const seed = PRESETS[1];
-        const find = (n) => allTeams.find((x) => (x.team_name || '').toLowerCase() === n.toLowerCase());
-        const a = find(seed.teamA);
-        const b = find(seed.teamB);
-        if (a && b) {
-          setTeamA({ team_id: a.team_id, team_name: a.team_name, players: buildBalancedXI(allPlayers, a.team_name) });
-          setTeamB({ team_id: b.team_id, team_name: b.team_name, players: buildBalancedXI(allPlayers, b.team_name) });
-          const venue = resolveVenue(allVenues, seed.venuePref);
-          setMatchScenario({
-            venue: venue?.venue_name || '',
-            venue_avg_score: venue?.avg_score || 250,
-            ...seed.scenario,
-            batsman_1: '',
-            batsman_2: '',
-          });
-          setActivePreset(seed.id);
-        }
-      } catch (err) {
-        setError('Could not reach the prediction API. It may still be waking up, so try again in a moment.');
-      } finally {
-        setLoading(false);
+        if (cancelled) return;
+        // Only adopt live data if it actually looks complete; otherwise the
+        // bundled snapshot already on screen stays put.
+        if (t.data?.teams?.length) setTeams(t.data.teams);
+        if (p.data?.players?.length) setPlayers(p.data.players);
+        if (v.data?.venues?.length) setVenues(v.data.venues);
+      } catch {
+        /* snapshot data remains in place */
       }
     };
-    load();
+
+    warm();
+    return () => { cancelled = true; };
   }, []);
 
   const handleTeamSelect = (type, id, name) => {
@@ -88,6 +103,14 @@ function App() {
     if (type === 'A') setTeamA(next);
     else setTeamB(next);
     setPrediction(null);
+    setActivePreset(null);
+  };
+
+  // Any squad change invalidates the shown projection, including the cached
+  // preset results, so a stale number never sits above edited inputs.
+  const invalidate = () => {
+    setPrediction(null);
+    setActivePreset(null);
   };
 
   const handlePlayerSelect = (type, id, name, country) => {
@@ -95,17 +118,20 @@ function App() {
       prev.players.length < 11 ? { ...prev, players: [...prev.players, { id, name, country }] } : prev;
     if (type === 'A') setTeamA(add);
     else setTeamB(add);
+    invalidate();
   };
 
   const handleRemovePlayer = (type, id) => {
     const drop = (prev) => ({ ...prev, players: prev.players.filter((p) => p.id !== id) });
     if (type === 'A') setTeamA(drop);
     else setTeamB(drop);
+    invalidate();
   };
 
   const handleAutoFill = (type, xi) => {
     if (type === 'A') setTeamA((prev) => ({ ...prev, players: xi }));
     else setTeamB((prev) => ({ ...prev, players: xi }));
+    invalidate();
   };
 
   /** Build the API payload for an arbitrary batting XI (used by the Impact Lab too). */
@@ -132,12 +158,26 @@ function App() {
     if (!ready) return;
     setPredicting(true);
     setError(null);
+    const payload = buildRequest(teamA.players);
+
+    // A first request against a sleeping container can time out. Retry once
+    // before showing an error, since by then the instance is usually awake.
+    const attempt = () => api.predict(payload);
     try {
-      const res = await api.predict(buildRequest(teamA.players));
+      let res;
+      try {
+        res = await attempt();
+      } catch (first) {
+        if (first.response) throw first; // a real API error, not a cold start
+        res = await attempt();
+      }
       setPrediction(res.data);
       setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 120);
     } catch (err) {
-      setError(err.response?.data?.error || 'Prediction failed. Please try again.');
+      setError(
+        err.response?.data?.error ||
+          'The prediction service is still starting up. Give it a few seconds and try again.'
+      );
     } finally {
       setPredicting(false);
     }
@@ -168,7 +208,8 @@ function App() {
     });
 
     setActivePreset(preset.id);
-    setPrediction(null);
+    // Cached result for this scenario, so switching presets stays instant.
+    setPrediction(presetPredictions[preset.id] || null);
     setError(null);
     setTimeout(() => predictorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
   };
@@ -197,15 +238,6 @@ function App() {
     setError(null);
     setTimeout(() => predictorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-dark-bg">
-        <Header />
-        <LoadingSpinner />
-      </div>
-    );
-  }
 
   return (
     <div id="top" className="min-h-screen bg-dark-bg">

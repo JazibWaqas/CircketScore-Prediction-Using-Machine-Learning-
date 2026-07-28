@@ -19,7 +19,7 @@ const Header = () => (
           How it works
         </a>
         <a
-          href="https://github.com/JazibWaqas/CircketScore-Prediction-Using-Machine-Learning-"
+          href="https://github.com/JazibWaqas/Cricket-Score-Prediction-Using-Machine-Learning-"
           target="_blank"
           rel="noreferrer noopener"
           className="flex items-center gap-1.5 transition-colors hover:text-dark-text"
